@@ -25,16 +25,16 @@ InputParameters InclusionsMeshModifier::validParams()
 
 	params.addRequiredParam<int>("fn", "number of fractures");
   
-	params.addRequiredParam<int>("nx_min", "");
-	params.addRequiredParam<int>("nx_max", "");
-	params.addRequiredParam<int>("ny_min", "");
-	params.addRequiredParam<int>("ny_max", "");
-	params.addParam<int>("nz_min", "");
-	params.addParam<int>("nz_max", "");
+	params.addParam<int>("nx_min", 0, "");
+	params.addParam<int>("nx_max", 0, "");
+	params.addParam<int>("ny_min", 0, "");
+	params.addParam<int>("ny_max", 0, "");
+	params.addParam<int>("nz_min", 0, "");
+	params.addParam<int>("nz_max", 0, "");
   
-	params.addRequiredParam<Real>("Lx", "Lx");
-	params.addRequiredParam<Real>("Ly", "Ly");
-	params.addParam        <Real>("Lz", "Lz");
+	params.addParam<Real>("Lx", 0.0, "Lx");
+	params.addParam<Real>("Ly", 0.0, "Ly");
+	params.addParam<Real>("Lz", 0.0, "Lz");
   
 	params.addRequiredParam< std::vector<Real> >("fx_string", "x-coordinates of center of fractures");
 	params.addRequiredParam< std::vector<Real> >("fy_string", "y-coordinates of center of fractures");
@@ -57,11 +57,11 @@ _nx_min( getParam<int>("nx_min") ),
 _nx_max( getParam<int>("nx_max") ),
 _ny_min( getParam<int>("ny_min") ),
 _ny_max( getParam<int>("ny_max") ),
-_nz_min( 0 ),
-_nz_max( 0 ),
+_nz_min( getParam<int>("nz_min") ),
+_nz_max( getParam<int>("nz_max") ),
 _Lx( getParam<Real>("Lx") ),
 _Ly( getParam<Real>("Ly") ),
-_Lz( 0.0 ),
+_Lz( getParam<Real>("Lz") ),
 _fx (getParam< std::vector<Real> >("fx_string")),
 _fy (getParam< std::vector<Real> >("fy_string")),
 _fa1(getParam< std::vector<Real> >("fa1_string")),
@@ -72,30 +72,21 @@ _fd2(getParam< std::vector<Real> >("fd2_string"))
 	if (parameters.isParamValid("fz_string")  &&
 	 	parameters.isParamValid("fa2_string") &&
 	 	parameters.isParamValid("fa3_string") &&
-	 	parameters.isParamValid("fd3_string") &&
-	 	parameters.isParamValid("nz_min")     &&
-	 	parameters.isParamValid("nz_max")     &&
-	 	parameters.isParamValid("Lz")           )
+	 	parameters.isParamValid("fd3_string") )
 	 {
         
 	 	_fz =getParam< std::vector<Real> >("fz_string");
 	 	_fa2=getParam< std::vector<Real> >("fa2_string");
 	 	_fa3=getParam< std::vector<Real> >("fa3_string");
 	 	_fd3=getParam< std::vector<Real> >("fd3_string");
-	 	_nz_min=getParam<int>("nz_min") ;
-	 	_nz_max=getParam<int>("nz_max") ;
-	 	_Lz=getParam<Real>("Lx");
 
 	 	_console<<"Assuming dimension is 3\n";
 	 	_fractureDim=3;
 	 }
 	 else if(!parameters.isParamValid("fz_string")  &&
-	 		!parameters.isParamValid("fa2_string") &&
-	 		!parameters.isParamValid("fa3_string") &&
-	 		!parameters.isParamValid("fd3_string") &&
-	 		!parameters.isParamValid("nz_min")     &&
-	 		!parameters.isParamValid("nz_max")     &&
-	 		!parameters.isParamValid("Lz")           )
+	 		 !parameters.isParamValid("fa2_string") &&
+	 		 !parameters.isParamValid("fa3_string") &&
+	 		 !parameters.isParamValid("fd3_string") )
 	 {
 	 	_console<<"Assuming dimension is 2\n";
 	 	_fractureDim=2;
