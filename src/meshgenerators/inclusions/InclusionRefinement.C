@@ -76,42 +76,44 @@ std::unique_ptr<MeshBase> InclusionRefinement::generate()
 	_unstructuredMesh=dynamic_cast<UnstructuredMesh *>(_meshBase);
 
 	//TEST FOR PERIODIC // ONLY 2D	
-	Real xmin(1e9),xmax(-1e9),ymin(1e9),ymax(-1e9);
+	// Real xmin(1e9),xmax(-1e9),ymin(1e9),ymax(-1e9);
 
-	MeshBase::const_node_iterator     nd=_unstructuredMesh->local_nodes_begin();
-	MeshBase::const_node_iterator end_nd=_unstructuredMesh->local_nodes_end  ();
-	for ( ; nd != end_nd ; ++nd)
-	{
-		Node * node = *nd;
-		xmin=std::min(xmin,node[0](0));
-		ymin=std::min(ymin,node[0](1));
-		xmax=std::max(xmax,node[0](0));
-		ymax=std::max(ymax,node[0](1));
-	}
-	std::cout<<"min=("<<xmin<<","<<ymin<<")"<<std::endl;
-	std::cout<<"max=("<<xmax<<","<<ymax<<")"<<std::endl;
+	// MeshBase::const_node_iterator     nd=_unstructuredMesh->local_nodes_begin();
+	// MeshBase::const_node_iterator end_nd=_unstructuredMesh->local_nodes_end  ();
+	// for ( ; nd != end_nd ; ++nd)
+	// {
+	// 	Node * node = *nd;
+	// 	xmin=std::min(xmin,node[0](0));
+	// 	ymin=std::min(ymin,node[0](1));
+	// 	xmax=std::max(xmax,node[0](0));
+	// 	ymax=std::max(ymax,node[0](1));
+	// }
+	// std::cout<<"min=("<<xmin<<","<<ymin<<")"<<std::endl;
+	// std::cout<<"max=("<<xmax<<","<<ymax<<")"<<std::endl;
 	
-	EquationSystems equation_systems (_unstructuredMesh[0]);
-	ImplicitSystem & system = equation_systems.add_system<ImplicitSystem> ("system");
-	system.add_variable ("variable", FIRST);
+	// EquationSystems equation_systems (_unstructuredMesh[0]);
+	// ImplicitSystem & system = equation_systems.add_system<ImplicitSystem> ("system");
+	// system.add_variable ("variable", FIRST);
 	
-	DofMap & dof_map = system.get_dof_map();
+	// DofMap & dof_map = system.get_dof_map();
 	
-	PeriodicBoundary horz(RealVectorValue(xmax-xmin, 0., 0.));
-	horz.myboundary = 3;
-	horz.pairedboundary = 1;
-	dof_map.add_periodic_boundary(horz);
+	// PeriodicBoundary horz(RealVectorValue(xmax-xmin, 0., 0.));
+	// horz.myboundary = 3;
+	// horz.pairedboundary = 1;
+	// dof_map.add_periodic_boundary(horz);
 	
-	PeriodicBoundary vert(RealVectorValue(0., ymax-ymin, 0.));
-	vert.myboundary = 0;
-	vert.pairedboundary = 2;
-	dof_map.add_periodic_boundary(vert);
+	// PeriodicBoundary vert(RealVectorValue(0., ymax-ymin, 0.));
+	// vert.myboundary = 0;
+	// vert.pairedboundary = 2;
+	// dof_map.add_periodic_boundary(vert);
 	
-	equation_systems.init ();	
+	// equation_systems.init ();	
 	//END TEST
 	meshRefinement=new MeshRefinement(_unstructuredMesh[0]);
-	meshRefinement[0].set_periodic_boundaries_ptr(dof_map.get_periodic_boundaries());
-
+	
+	// TEST FOR PERIODIC // ONLY 2D
+	//meshRefinement[0].set_periodic_boundaries_ptr(dof_map.get_periodic_boundaries());
+	// END TEST
 	if (_hasRefinementVector)
 		doRefine(_refinements);
 
