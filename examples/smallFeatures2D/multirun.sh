@@ -6,8 +6,8 @@
 ##./run.sh 48
 ##./run.sh 96
 #./run.sh 192
-./run.sh 384
+#./run.sh 384
 #./run.sh 768
-#./run.sh 1536
+./run.sh 1536
 #./run.sh 3072
 #./run.sh 6144
