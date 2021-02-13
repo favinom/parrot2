@@ -14,17 +14,29 @@ public:
 
   FlowAndTransport(const InputParameters &parameters);
 
-protected:
-  virtual void computeQpProperties();
+  void getPermeability(std::vector<Point> const & p , std::vector<Real> & permeability);
 
+  void getPermeabilityPoint(Point const & p , Real & permeability);
 
 protected:
+    enum OperationType
+    {
+        FIRST,
+        MAX,
+        MIN,
+        HARMONIC,
+        ARITHMETIC
+    };
+
+    virtual void computeQpProperties();
+
+    MooseEnum         const _operation_type;
 
     MeshGeneratorName       _meshGeneratorName;
     bool              const _hasMeshGenerator;
 
-    Real const _permeabilityBackInput;
-    Real       _permeabilityFracInput;
+    Real              const _permeabilityBackInput;
+    std::vector<Real>       _permeabilityFracInput;
 
     //Real const _poroInput;
     //Real _condFracture;
