@@ -18,11 +18,10 @@ InputParameters FlowAndTransport::validParams()
 	params.addRequiredParam<Real>("k","k");
 	params.addParam< std::vector<Real> >("kFrac","kFrac");
 
-	//params.addRequiredParam<bool>("conservative","use a conservative scheme?");
-	//params.addCoupledVar("pressure","The gradient of this variable will be used as the velocity vector.");
+	params.addCoupledVar("pressure","The gradient of this variable will be used as the velocity vector.");
 
-	//params.addRequiredParam<Real>("phi","phi");
-	//params.addParam<Real>("phiFrac","phiFrac");
+	params.addParam<Real>("phi",0.0,"phi");
+	params.addParam<Real>("phiFrac",0.0,"phiFrac");
 
 	return params;
 }
@@ -32,23 +31,13 @@ Material(parameters),
 _operation_type(getParam<MooseEnum>("operation_type")),
 _hasMeshGenerator(parameters.isParamValid("inclusions_list")),
 _permeabilityBackInput(getParam<Real>("k")),
-_Kscalar(declareProperty<Real>("conductivityProperty"))/*,
-_poroInput(getParam<Real>("phi")),
-_dim(_mesh.dimension()),
-_isPressureValid(parameters.isParamValid("pressure")),
-_conservativeScheme(getParam<bool>("conservative")),
-_gradP(_isPressureValid ? coupledGradient("pressure"): _grad_zero),
-_poro(declareProperty<Real>("Porosity")),
-_K(declareProperty<RealTensorValue>("PermeabilityTensor")),
-
-_U(declareProperty<RealVectorValue>("VelocityVector"))*/
+_porosityBackInput(getParam<Real>("phi")),
+_porosityFracInput(getParam<Real>("phiFrac")),
+_gradP(parameters.isParamValid("pressure") ? coupledGradient("pressure"): _grad_zero),
+_Kscalar(declareProperty<Real>("conductivityProperty")),
+_phi(declareProperty<Real>("porosityPropery")),
+_U(declareProperty<RealVectorValue>("velocityProperty"))
 {
-	// _id=RealTensorValue(0.0,0.0,0.0,
-	// 	0.0,0.0,0.0,
-	// 	0.0,0.0,0.0);
-
-	// for (int i=0; i<_dim; ++i)
-	// 	_id(i,i)=1.0;
 
 	if ( _hasMeshGenerator && !isParamValid("kFrac"))
 	{
@@ -92,6 +81,18 @@ void
 FlowAndTransport::computeQpProperties()
 {
 	getPermeabilityPoint( _q_point[_qp] , _Kscalar[_qp] );
+	_phi[_qp]=_porosityBackInput;
+
+	if (_hasMeshGenerator)
+	{
+		MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
+	  	InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
+	  	if (inclusionsMeshModifier.isInside(_q_point[_qp]) )
+	  	{
+	  		_phi[_qp]=_porosityFracInput;
+	  	}
+	}
+	_U[_qp]=-_Kscalar[_qp]*_gradP[_qp];
 }
 
 void FlowAndTransport::getPermeability(std::vector<Point> const & p , std::vector<Real> & permeability)

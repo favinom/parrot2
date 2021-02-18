@@ -38,6 +38,11 @@ protected:
     Real              const _permeabilityBackInput;
     std::vector<Real>       _permeabilityFracInput;
 
+    Real              const _porosityBackInput;
+    Real              const _porosityFracInput;
+
+    VariableGradient  const &_gradP;
+
     //Real const _poroInput;
     //Real _condFracture;
     
@@ -48,11 +53,12 @@ protected:
     //bool const _isPressureValid;
     //bool const _conservativeScheme;
 
-    //const VariableGradient &_gradP;
+    //
   
-    //MaterialProperty<Real> &_poro;
+    
     //MaterialProperty<RealTensorValue> &_K;
-    MaterialProperty<Real> &_Kscalar;
-    //MaterialProperty<RealVectorValue> &_U;
+    MaterialProperty<Real> &  _Kscalar;
+    MaterialProperty<Real> &  _phi;
+    MaterialProperty<RealVectorValue> &_U;
 
 };
