@@ -116,6 +116,7 @@ bool BoxInclusion::IsInside(RealVectorValue const & point, Real bound) const
 	for (int d=0; d<_dim; ++d)
 	{
 		localbounds(d)=_axisSizes(d)/2.0+bound;
+		//localbounds(d)=std::max(_axisSizes(d)/2.0,bound);
 	}
 	for (int d=0; d<_dim; ++d)
 	{
