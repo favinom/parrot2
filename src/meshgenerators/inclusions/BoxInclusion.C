@@ -197,9 +197,60 @@ bool BoxInclusion::IsOnBoundary2D(Elem const & elem) const
 
 }
 
-bool BoxInclusion::IsOnBoundary3D(Elem const & /*elem*/) const
+bool BoxInclusion::IsOnBoundary3D(Elem const & elem) const
 {
-	assert(false);
+	assert( elem.n_vertices()==elem.n_nodes () );
+	
+	// Fill cmax and cmin with the maximum and minimum coordinates
+	// of the vertices
+	RealVectorValue cmax(-1e9,-1e9,-1e9);
+	RealVectorValue cmin( 1e9, 1e9, 1e9);
+
+	for (unsigned int v=0; v<elem.n_vertices(); ++v)
+	{
+		Point const & point=elem.point(v);
+		RealVectorValue rvv(point);
+		for (int j=0; j<3; ++j)
+		{
+			cmax(j)=std::max( cmax(j),rvv(j) );
+			cmin(j)=std::min( cmin(j),rvv(j) );
+		}
+	}
+
+	RealVectorValue const & p0=_vertices.at(0);
+	RealVectorValue const & p1=_vertices.at(1);
+	RealVectorValue const & p2=_vertices.at(2);
+	RealVectorValue const & p3=_vertices.at(3);
+	RealVectorValue const & p4=_vertices.at(4);
+	RealVectorValue const & p5=_vertices.at(5);
+	RealVectorValue const & p6=_vertices.at(6);
+	RealVectorValue const & p7=_vertices.at(7);
+
+	if ( doesEdgeIntersectElement_3D(p0, p1, cmin, cmax) )
+		return true;
+	if ( doesEdgeIntersectElement_3D(p0, p2, cmin, cmax) )
+	   	return true;
+	if ( doesEdgeIntersectElement_3D(p1, p3, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p2, p3, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p4, p5, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p4, p6, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p5, p7, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p6, p7, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p0, p4, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p1, p5, cmin, cmax) )
+	   	return true;
+	if ( doesEdgeIntersectElement_3D(p2, p6, cmin, cmax) )
+	  	return true;
+	if ( doesEdgeIntersectElement_3D(p3, p7, cmin, cmax) )
+	  	return true;
+	
 	return false;
 }
 
@@ -239,6 +290,5 @@ void BoxInclusion::Print()  const
 	{
 		std::cout<<_vertices.at(i)<<std::endl;
 	}
-	
 
 }

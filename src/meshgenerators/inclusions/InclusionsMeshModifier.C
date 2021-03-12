@@ -151,9 +151,9 @@ _fd2(getParam< std::vector<Real> >("fd2_string"))
 
 		if (_fractureDim==3)
 		{
-			center.at(i)(2)   =_fz .at(i);
-			rotation.at(1)    =_fa2.at(i)/180.0*pi;
-			rotation.at(2)    =_fa3.at(i)/180.0*pi;
+			center   .at(i)(2)=_fz .at(i);
+			rotation .at(i)(1)=_fa2.at(i)/180.0*pi;
+			rotation .at(i)(2)=_fa3.at(i)/180.0*pi;
 			dimension.at(i)(2)=_fd3.at(i);
 		}
 	
