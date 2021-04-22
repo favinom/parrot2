@@ -161,7 +161,6 @@ bool doesEdgeIntersectElement_3D(RealVectorValue const & p1, RealVectorValue con
 
 Real CalcXY_3D(Real const & zval, RealVectorValue const & p1, RealVectorValue const & p2, int const dir)
 {
-	return 0.0;
 	Real const x0=p1(0);
 	Real const y0=p1(1);
 	Real const z0=p1(2);
@@ -183,7 +182,6 @@ Real CalcXY_3D(Real const & zval, RealVectorValue const & p1, RealVectorValue co
 
 Real CalcXZ_3D(Real const & yval, RealVectorValue const & p1, RealVectorValue const & p2, int const dir)
 {
-	return 0.0;
 	Real const x0=p1(0);
 	Real const y0=p1(1);
 	Real const z0=p1(2);
@@ -205,7 +203,6 @@ Real CalcXZ_3D(Real const & yval, RealVectorValue const & p1, RealVectorValue co
 
 Real CalcYZ_3D(Real const & xval, RealVectorValue const & p1, RealVectorValue const & p2, int const dir)
 {
-	return 0.0;
 	Real const x0=p1(0);
 	Real const y0=p1(1);
 	Real const z0=p1(2);
@@ -225,39 +222,74 @@ Real CalcYZ_3D(Real const & xval, RealVectorValue const & p1, RealVectorValue co
 	return 0.0;
 }
 
+bool doesFaceIntersectElement_3D(RealVectorValue const & p1, RealVectorValue const & p2, RealVectorValue const & p3, RealVectorValue const & hmin, RealVectorValue const & hmax)
+{
+	RealTensorValue A(	p2(0)-p1(0),p3(0)-p1(0),0.0,
+						p2(1)-p1(1),p3(1)-p1(1),0.0,
+						p2(2)-p1(2),p3(2)-p1(2),0.0);
 
-// void CalcXY_3D(Real const & zval, RealVectorValue const & p1, RealVectorValue const & p2, Real & xval, Real & yval)
-// {
-// 	Real x0=p1(0);
-//     Real x1=p2(0);
-//     Real y0=p1(1);
-//     Real y1=p2(1);
+	RealVectorValue b=-1.0*p1;
 
-//     xval=0.0;
-//     yval=0.0;
+	if ( doesFaceIntersectEdge_3D(A,b,hmin,hmax,0) )
+		return true;
+	if ( doesFaceIntersectEdge_3D(A,b,hmin,hmax,1) )
+		return true;
+	if ( doesFaceIntersectEdge_3D(A,b,hmin,hmax,2) )
+		return true;
 
-//     // if ( std::fabs(y0-y1)<myeps )
-//     // {
-//     // 	xval=NAN;
-//     // }
-//     // else
-//     // 	xval=x0 + (yval - y0)*(x1 - x0)/(y1 - y0);
+	return false;
+}
 
-// 	// Real x0=p1(0);
-//  //    Real y0=p1(1);
-//  //    Real z0=p1(2);
-// 	// Real x1=p2(0);
-//  //    Real y1=p2(1);
-//  //    Real z1=p2(2);
+bool doesFaceIntersectEdge_3D(RealTensorValue const & A, RealVectorValue const & b, RealVectorValue const & hmin, RealVectorValue const & hmax, int const dir)
+{
+	RealVectorValue const ** ciao;
+	ciao = new RealVectorValue const * [2];
+	ciao[0]=&hmin;
+	ciao[1]=&hmax;
+	for (int i=0; i<2;++i)
+	{
+		for (int j=0; j<2; ++j)
+		{
+			RealVectorValue bloc=b;
+			RealTensorValue Aloc=A;
+			if (dir==0)
+			{
+				bloc(1)=bloc(1)+ciao[i][0](1);
+				bloc(2)=bloc(2)+ciao[j][0](2);
+			}
+			if (dir==1)
+			{
+				bloc(0)=bloc(0)+ciao[i][0](0);
+				bloc(2)=bloc(2)+ciao[j][0](2);
+			}
+			if (dir==2)
+			{
+				bloc(0)=bloc(0)+ciao[i][0](0);
+				bloc(1)=bloc(1)+ciao[j][0](1);
+			}
+			bloc(dir)=0.0;
+			Aloc(dir,0)=0.0;
+			Aloc(dir,1)=0.0;
+			Aloc(dir,2)=1.0;
+			Real detA=Aloc.det();
+			if ( std::fabs(detA)>1e-12 )
+			{
+				RealVectorValue x;
+				Aloc.solve(bloc,x);
+				if (0.0-myeps<=x(0) && x(0)<=1.0+myeps && 0.0-myeps<=x(1) && x(1)<=1.0+myeps)
+				{
+					//std::cout<<x<<std::endl;
+					Real otherCoord=A(dir,0)*x(0)+A(dir,1)*x(1)-b(dir);
+					if (hmin(dir)-myeps<= otherCoord && otherCoord<= hmax(dir)+myeps )
+					{
+						delete ciao;
+						return true;
+					}
+				}
+			}
 
-//  //    if ( std::fabs(z0-z1)<myeps )
-//  //    {
-//  //    	xval=NAN;
-//  //    	yval=NAN;
-//  //    }
-//  //    else
-//  //    {
-//  //    	xval=x0 + (zval - z0)/(z1 - z0)*(x1 - x0);
-//  //    	yval=y0 + (zval - z0)/(z1 - z0)*(y1 - y0);
-//  //    }
-// }
+		}
+	}
+	delete ciao;
+	return false;
+}

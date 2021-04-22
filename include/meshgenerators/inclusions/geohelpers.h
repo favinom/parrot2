@@ -14,3 +14,7 @@ Real CalcXZ_3D(Real const & yval, RealVectorValue const & p1, RealVectorValue co
 Real CalcYZ_3D(Real const & xval, RealVectorValue const & p1, RealVectorValue const & p2, int const dir);
 
 //void CalcXY_3D(Real const & zval, RealVectorValue const & p1, RealVectorValue const & p2, Real & xval, Real & yval);
+
+bool doesFaceIntersectElement_3D(RealVectorValue const & p1, RealVectorValue const & p2, RealVectorValue const & p3, RealVectorValue const & hmin, RealVectorValue const & hmax);
+
+bool doesFaceIntersectEdge_3D(RealTensorValue const & A, RealVectorValue const & b, RealVectorValue const & hmin, RealVectorValue const & hmax, int const dir);

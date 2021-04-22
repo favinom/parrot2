@@ -250,6 +250,20 @@ bool BoxInclusion::IsOnBoundary3D(Elem const & elem) const
 	  	return true;
 	if ( doesEdgeIntersectElement_3D(p3, p7, cmin, cmax) )
 	  	return true;
+
+	if ( doesFaceIntersectElement_3D(p0, p1, p2, cmin, cmax) )
+	  	return true;
+	if ( doesFaceIntersectElement_3D(p4, p5, p6, cmin, cmax) )
+	  	return true;
+	if ( doesFaceIntersectElement_3D(p0, p1, p4, cmin, cmax) )
+	  	return true;
+	if ( doesFaceIntersectElement_3D(p2, p3, p6, cmin, cmax) )
+	  	return true;
+	if ( doesFaceIntersectElement_3D(p0, p2, p4, cmin, cmax) )
+	  	return true;
+	if ( doesFaceIntersectElement_3D(p1, p3, p5, cmin, cmax) )
+	  	return true;
+	  
 	
 	return false;
 }
