@@ -9,7 +9,7 @@
 
 #include "PermeabilityDiffusion.h"
 
-registerMooseObject("MooseApp", PermeabilityDiffusion);
+registerMooseObject("parrot2App", PermeabilityDiffusion);
 
 defineLegacyParams(PermeabilityDiffusion);
 
