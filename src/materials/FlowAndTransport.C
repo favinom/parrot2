@@ -81,17 +81,7 @@ void
 FlowAndTransport::computeQpProperties()
 {
 	getPermeabilityPoint( _q_point[_qp] , _Kscalar[_qp] );
-	_phi[_qp]=_porosityBackInput;
-
-	if (_hasMeshGenerator)
-	{
-		MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
-	  	InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
-	  	if (inclusionsMeshModifier.isInside(_q_point[_qp]) )
-	  	{
-	  		_phi[_qp]=_porosityFracInput;
-	  	}
-	}
+	getPorosityPoint    ( _q_point[_qp] , _phi[_qp]     );
 	_U[_qp]=-_Kscalar[_qp]*_gradP[_qp];
 }
 
@@ -103,6 +93,16 @@ void FlowAndTransport::getPermeability(std::vector<Point> const & p , std::vecto
 		getPermeabilityPoint( p.at(i) , permeability.at(i) );
 	}
 }
+
+void FlowAndTransport::getPorosity(std::vector<Point> const & p , std::vector<Real> & porosity)
+{
+	porosity.resize( p.size() );
+	for (int i=0; i<p.size(); ++i)
+	{
+		getPermeabilityPoint( p.at(i) , porosity.at(i) );
+	}
+}
+
 
 void FlowAndTransport::getPermeabilityPoint(Point const & p , Real & permeability)
 {
@@ -166,6 +166,20 @@ void FlowAndTransport::getPermeabilityPoint(Point const & p , Real & permeabilit
     				mooseError("no case");// code to be executed if n doesn't match any cases
     			}
 			}// switch
+	  	}
+	}
+}
+
+void FlowAndTransport::getPorosityPoint(Point const & p , Real & porosity)
+{
+	porosity=_porosityBackInput;
+	if (_hasMeshGenerator)
+	{
+		MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
+	  	InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
+	  	if (inclusionsMeshModifier.isInside( p ) )
+	  	{
+	  		porosity=_porosityFracInput;
 	  	}
 	}
 }

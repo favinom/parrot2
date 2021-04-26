@@ -18,6 +18,10 @@ public:
 
   void getPermeabilityPoint(Point const & p , Real & permeability);
 
+  void getPorosity(std::vector<Point> const & p , std::vector<Real> & porosity);
+
+  void getPorosityPoint(Point const & p , Real & porosity);
+
 protected:
     enum OperationType
     {
@@ -53,10 +57,6 @@ protected:
     //bool const _isPressureValid;
     //bool const _conservativeScheme;
 
-    //
-  
-    
-    //MaterialProperty<RealTensorValue> &_K;
     MaterialProperty<Real> &  _Kscalar;
     MaterialProperty<Real> &  _phi;
     MaterialProperty<RealVectorValue> &_U;
