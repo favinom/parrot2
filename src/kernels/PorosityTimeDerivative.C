@@ -13,7 +13,7 @@
 
 #define TOLL 1e-8
 
-registerMooseObject("parrotApp", PorosityTimeDerivative);
+registerMooseObject("parrot2App", PorosityTimeDerivative);
 
 template <>
 InputParameters

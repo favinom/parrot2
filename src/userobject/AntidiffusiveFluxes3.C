@@ -48,22 +48,6 @@ validParams<AntidiffusiveFluxes3>()
     
 }
 
-static void getRow3(PetscMatrix<Number> & matrix, int const & row, std::vector<Real> & values, std::vector<int> & columns)
-{
-    Mat const & mat=matrix.mat();
-    PetscInt ncol;
-    PetscInt const *col;
-    PetscScalar const *val;
-    MatGetRow(mat,row,&ncol,&col,&val);
-    values.resize(ncol);
-    columns.resize(ncol);
-    for (int i=0; i<ncol; ++i)
-    {
-        values[i] =val[i];
-        columns[i]=col[i];
-    }
-    MatRestoreRow(mat,row,&ncol,&col,&val);
-}
 
 
 AntidiffusiveFluxes3::AntidiffusiveFluxes3(const InputParameters & parameters):

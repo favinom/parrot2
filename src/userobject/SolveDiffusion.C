@@ -22,33 +22,7 @@
 
 #include "helpers.h"
 
-// C++ includes
 
-// #include <iostream>
-// #include <string>
-// #include "FEProblem.h"
-// #include "MooseVariableFEBase.h"
-// #include "NonlinearSystemBase.h"
-
-// #include "libmesh/equation_systems.h"
-// #include "libmesh/mesh_base.h"
-// //#include "libmesh/mesh.h"
-// //#include "libmesh/nonlinear_implicit_system.h"
-// //#include "libmesh/transient_system.h"
-
-// #include "libmesh/numeric_vector.h"
-// #include "libmesh/petsc_matrix.h"
-// #include "libmesh/petsc_vector.h"
-// #include "libmesh/nemesis_io.h"
-
-
-// #include "libmesh/quadrature_gauss.h"
-// #include "libmesh/dirichlet_boundaries.h"
-// #include "libmesh/zero_function.h"
-// #include "libmesh/const_function.h"
-// #include "libmesh/parsed_function.h"
-// #include "libmesh/quadrature_grid.h"
-// #include "libmesh/quadrature.h"
 
 registerMooseObject("parrot2App", SolveDiffusion);
 

@@ -31,7 +31,7 @@
 
 
 
-registerMooseObject("parrotApp",AntidiffusiveFluxes);
+registerMooseObject("parrot2App",AntidiffusiveFluxes);
 
 template <>
 InputParameters
@@ -107,19 +107,7 @@ AntidiffusiveFluxes::stabilize_coeffiecient()
     const DofMap & dof_map = _nl.dofMap();    
     PetscMatrix<Number> *petsc_mat = dynamic_cast<libMesh::PetscMatrix<Number>* >(_sys.matrix);
 
-    //petsc_mat->print_matlab("petsc_mat.txt");
-    //_stab_matrix.print_matlab("original.txt");    
-
-    //    int m=dof_map.n_dofs();
-    //
-    //    int n=dof_map.n_dofs();
-    //
-    //    int m_l=dof_map.n_local_dofs();
-    //
-    //    int n_l=dof_map.n_local_dofs();
-
-
-    // int nnz_x_row = *std::max_element(dof_map.get_n_nz().begin(), dof_map.get_n_nz().end());
+    
 
     StoreOperators & storeOperatorsUO=_fe_problem.getUserObject<StoreOperators>(_userObjectName);
 

@@ -10,7 +10,7 @@
 #include "Advection.h"
 //#include "Function.h"
 
-registerMooseObject("parrotApp", Advection);
+registerMooseObject("parrot2App", Advection);
 
 template <>
 InputParameters
