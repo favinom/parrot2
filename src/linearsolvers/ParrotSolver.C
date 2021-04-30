@@ -113,6 +113,8 @@ PetscErrorCode ParrotSolver::solve()
   t_start = std::chrono::high_resolution_clock::now();
   //_ierr = PCApply(_pc,_rhs_PV->vec(),_sol_PV->vec()); CHKERRQ(_ierr);
   _ierr = KSPSolve(_ksp,_rhs_PV->vec(),_sol_PV->vec()); CHKERRQ(_ierr);
+  _sol_PV->print_matlab();
+  _rhs_PV->print_matlab();
   t_stop = std::chrono::high_resolution_clock::now();
   
   std::cout<<"Solving time: "<< std::chrono::duration<double, std::milli>(t_stop-t_start).count()<< " ms\n";

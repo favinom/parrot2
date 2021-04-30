@@ -13,7 +13,6 @@
 #include "FEProblem.h"
 #include "FEProblemBase.h"
 #include "NonlinearSystemBase.h"
-#include "FractureUserObject.h"
 #include "Assembly.h"
 // #include "MooseVariableFEBase.h"
 
@@ -28,30 +27,40 @@ validParams<AssembleMassMatrix>()
 {
   InputParameters params = validParams<GeneralUserObject>();
   
-  params.addRequiredParam<std::vector<int>>("block_id","block_id");
-  params.addRequiredParam<std::vector<Real>>("value_p","value_p");
+  params.addRequiredParam<std::string>("material_name","material_name");
   params.addRequiredParam<bool>("constrain_matrix","constrain_matrix");
   params.addParam<std::string>("dc_boundaries", "-1", "Dirichlet Boundary ID");
   params.addParam<std::string>("dc_variables" , "-1", "Variable to which given BC_id applies");
   params.addRequiredParam<std::vector<Real>>("value_D_bc", "The value of Dirichlet");
-  //params.addRequiredParam< std::vector<BoundaryName> >("dirichlet_nodeset_names","The name of the nodeset to create");
-  //params.addRequiredParam< std::vector<FunctionName> >("dirichlet_function_names", "The function.");
-
- 
+  params.addRequiredParam<UserObjectName>("operator_userobject","The userobject that stores our operators"); 
   return params;
+}
+
+
+static void getRow(PetscMatrix<Number> & matrix, int const & row, std::vector<Real> & values, std::vector<int> & columns)
+{
+    Mat const & mat=matrix.mat();
+    PetscInt ncol;
+    PetscInt const *col;
+    PetscScalar const *val;
+    MatGetRow(mat,row,&ncol,&col,&val);
+    values.resize(ncol);
+    columns.resize(ncol);
+    for (int i=0; i<ncol; ++i)
+    {
+        values[i] =val[i];
+        columns[i]=col[i];
+    }
+    MatRestoreRow(mat,row,&ncol,&col,&val);
 }
 
 AssembleMassMatrix::AssembleMassMatrix(const InputParameters & parameters) :
 GeneralUserObject(parameters),
-// _vector_p(getParam<std::vector<int>>("block_id")),
-// _vector_value(getParam<std::vector<Real>>("value_p")),
-// userObjectName(getParam<UserObjectName>("operator_userobject")),
+_material_name ( getParam<std::string>("material_name") ),
+_userObjectName(getParam<UserObjectName>("operator_userobject")),
 _constrainMatrices(getParam<bool>("constrain_matrix")),
 _code_dof_map(true),
-// _hasMeshModifier( isParamValid("fractureMeshModifier") ),
 _qrule(_assembly.qRule()),
-_dirichletNodesetNames ( getParam<std::vector<BoundaryName> >("dirichlet_nodeset_names" ) ),
-_dirichletFunctionNames( getParam<std::vector<FunctionName> >("dirichlet_function_names") ),
 _dc_var(getParam<std::string>("dc_variables")),
 _value_D_bc(getParam<std::vector<Real>>("value_D_bc"))
 
@@ -69,62 +78,70 @@ void AssembleMassMatrix::execute()
 {
   assemble_mass_matrix();
   determine_dc_bnd_var_id(AssembleMassMatrix::split_string(_dc_var, ' '));
+
   find_boundary(_dc_boundary_id);
 };
 
+void AssembleMassMatrix::initialize()
+{
+
+  TransientNonlinearImplicitSystem const & _system2 = _fe_problem.es().get_system<TransientNonlinearImplicitSystem>("nl0");
+       
+      // _interpolator->init();
+    _equationSystemsT=&_fe_problem.es();
+
+    _meshBase=&_equationSystemsT[0].get_mesh();
+
+    _pp_comm.push_back( &_meshBase[0].comm() );
+
+    _linearImplicitSystemT = &_equationSystemsT->add_system<LinearImplicitSystem> ("Trasport");
+
+    _test_var = _linearImplicitSystemT[0].add_variable ("test_var", FIRST);
+
+    SparseMatrix<Number> & _interpolator = _linearImplicitSystemT[0].add_matrix("Interpolator");
+    SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].add_matrix("MassMatrix");
+    SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Poro_mass_matrix");
+
+    SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Lump_mass_matrix");
+    SparseMatrix<Number> & _poro_lump_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Poro_lump_mass_matrix");
+    SparseMatrix<Number> & _hanging_interpolator  = _linearImplicitSystemT[0].add_matrix("Hanging Interpolator");
+    SparseMatrix<Number> & _stab_matrix  =  _linearImplicitSystemT[0].add_matrix("_stab_matrix");
+
+    _equationSystemsT[0].reinit();
+    _equationSystemsT[0].print_info();
+
+}
+
 void AssembleMassMatrix::assemble_mass_matrix(){
 
-  _console << "Assemble_Mass_matrix() begin "  << std::endl;
+    _console << "Assemble_Mass_matrix() begin "  << std::endl;
 
-  _materialBase = &getMaterialByName(_material_name.c_str(),true);
-  _flowAndTransport = dynamic_cast<FlowAndTransport *>(_materialBase);
+    _materialBase = &getMaterialByName(_material_name.c_str(),true);
+    _flowAndTransport = dynamic_cast<FlowAndTransport *>(_materialBase);
 
-  DofMap   const & dof_map = _fe_problem.getNonlinearSystemBase().dofMap();
+    DofMap   const & dof_map = _fe_problem.getNonlinearSystemBase().dofMap();
 
-  StoreOperators & storeOperatorsUO=(_fe_problem.getUserObjectTempl<StoreOperators>(userObjectName));
-  _interpolator          = storeOperatorsUO.Interpolator();
-  _mass_matrix           = storeOperatorsUO.MassMatrix();
-  _poro_mass_matrix      = storeOperatorsUO.PoroMassMatrix();
-  _lump_mass_matrix      = storeOperatorsUO.LumpMassMatrix();
-  _poro_lump_mass_matrix = storeOperatorsUO.PoroLumpMassMatrix();
-  _hanging_interpolator  = storeOperatorsUO.H_Interpolator();
-  _hanging_vec           = storeOperatorsUO.HangVec();
-  _hanging_vec->init(dof_map.n_dofs(), dof_map.n_local_dofs());
-  _hanging_vec->zero();
-  _hanging_vec->add(1.0);
+    StoreOperators & storeOperatorsUO=(_fe_problem.getUserObject<StoreOperators>(_userObjectName));
+    _hanging_vec           = storeOperatorsUO.HangVec();
+    _hanging_vec->init(dof_map.n_dofs(), dof_map.n_local_dofs());
+    _hanging_vec->zero();
+    _hanging_vec->add(1.0);
+
+    _equationSystemsT=&_fe_problem.es();
 
 
-  if (_code_dof_map)
-  {
-     	_interpolator->attach_dof_map(dof_map);
-     	_mass_matrix->attach_dof_map(dof_map);
-     	_poro_mass_matrix->attach_dof_map(dof_map);
-     	_lump_mass_matrix->attach_dof_map(dof_map);
-     	_poro_lump_mass_matrix->attach_dof_map(dof_map);
-      _hanging_interpolator->attach_dof_map(dof_map);
-         
-     	_interpolator->init();
-     	_mass_matrix->init();
-     	_poro_mass_matrix->init();
-     	_lump_mass_matrix->init();
-     	_poro_lump_mass_matrix->init();
-      _hanging_interpolator->init();
-  }
-  else
-  {
-     	int m=dof_map.n_dofs();
-     	int n=dof_map.n_dofs();
-     	int m_l=dof_map.n_local_dofs();
-     	int n_l=dof_map.n_local_dofs();
 
-     	_interpolator->init(m,n,m_l,n_l);
-     	_mass_matrix->init(m,n,m_l,n_l);
-     	_poro_mass_matrix->init(m,n,m_l,n_l);
-     	_lump_mass_matrix->init(m,n,m_l,n_l);
-     	_poro_lump_mass_matrix->init(m,n,m_l,n_l);
-      _hanging_interpolator->init(m,n,m_l,n_l);
+    _linearImplicitSystemT = &_equationSystemsT->get_system<LinearImplicitSystem> ("Trasport");
 
-  }
+
+
+    SparseMatrix<Number> & _interpolator = _linearImplicitSystemT[0].get_matrix("Interpolator");
+    SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].get_matrix("MassMatrix");
+    SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Poro_mass_matrix");
+
+    SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Lump_mass_matrix");
+    SparseMatrix<Number> & _poro_lump_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Poro_lump_mass_matrix");
+    SparseMatrix<Number> & _hanging_interpolator  = _linearImplicitSystemT[0].get_matrix("Hanging Interpolator");
 
 
     // Get a constant reference to the mesh object.
@@ -163,8 +180,19 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     DenseMatrix<Number> Me_l;
     DenseMatrix<Number> Me_l_p;
     DenseMatrix<Number> Me_i, Me_h;
-    
-    MeshBase::const_element_iterator       el     = mesh.active_local_elements_begin();
+  
+
+    _interpolator.zero();
+    _mass_matrix.zero();
+    _poro_mass_matrix.zero();
+    _lump_mass_matrix.zero();
+    _poro_lump_mass_matrix.zero();
+    _poro_mass_matrix.zero();
+
+      
+
+
+    MeshBase::const_element_iterator       el    = mesh.active_local_elements_begin();
     MeshBase::const_element_iterator const end_el = mesh.active_local_elements_end();
 
 
@@ -190,20 +218,18 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     	Me_l.resize(loc_n,loc_n);
     	Me_l_p.resize(loc_n,loc_n);
     	Me_i.resize(loc_n,loc_n);
-
-        Me_h.resize(loc_n,loc_n);
+      Me_h.resize(loc_n,loc_n);
 
     	Me.zero();
     	Me_p.zero();
     	Me_l.zero();
     	Me_l_p.zero();
     	Me_i.zero();
-
       Me_h.zero();
 
       std::vector<Number>  poroVec;
         
-      _flowAndTransport[0].getPermeability(q_points,poroVec);
+      _flowAndTransport[0].getPorosity(q_points,poroVec);
         
 
     	for (unsigned int i=0; i<phi.size(); i++)
@@ -231,6 +257,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     	{
     		dof_map.constrain_element_matrix(Me_i,dof_indices_i,true);
         dof_map.constrain_element_matrix(Me_h, dof_indices_h, true);
+      
 
         //std::cout<<"a"<<Me_h.m()<<"b"<<Me_h.n()<<"c"<<dof_indices_h.size()<<std::endl;
 
@@ -255,7 +282,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
               Real value = -1.0 * Me_h(i,j);
               
-              _hanging_interpolator->set(dof_indices.at(i),dof_indices.at(j),value);
+              _hanging_interpolator.set(dof_indices.at(i),dof_indices.at(j),value);
 
             }
           }
@@ -286,66 +313,34 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
       
 
-    	(*_mass_matrix).add_matrix(Me, dof_indices);
-    	(*_poro_mass_matrix).add_matrix (Me_p, dof_indices_p);
-    	(*_lump_mass_matrix).add_matrix (Me_l, dof_indices_l);
-    	(*_poro_lump_mass_matrix).add_matrix (Me_l_p, dof_indices_l_p);
-    	(*_interpolator).add_matrix (Me_i, dof_indices_i);
+    	(_mass_matrix).add_matrix(Me, dof_indices);
+    	(_poro_mass_matrix).add_matrix (Me_p, dof_indices_p);
+    	(_lump_mass_matrix).add_matrix (Me_l, dof_indices_l);
+    	(_poro_lump_mass_matrix).add_matrix (Me_l_p, dof_indices_l_p);
+    	(_interpolator).add_matrix (Me_i, dof_indices_i);
 
       //(*_hanging_interpolator).add_matrix (Me_h, dof_indices_h);
-   }
+    }
 
-   if (!_code_dof_map)
-   {
-   	MatSetOption(_mass_matrix->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-   	MatSetOption(_poro_mass_matrix->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-   	MatSetOption(_poro_lump_mass_matrix->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-   	MatSetOption(_lump_mass_matrix->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-   	MatSetOption(_interpolator->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-    MatSetOption(_hanging_interpolator->mat(), MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-   }
 
-   (*_mass_matrix).close();
-   (*_poro_mass_matrix).close();
-   (*_poro_lump_mass_matrix).close();
-   (*_lump_mass_matrix).close();
-   (*_interpolator).close();
-   (*_hanging_interpolator).close();
+
+   (_mass_matrix).close();
+   (_poro_mass_matrix).close();
+   (_poro_lump_mass_matrix).close();
+   (_lump_mass_matrix).close();
+   (_interpolator).close();
+   (_hanging_interpolator).close();
+
     _hanging_vec->close();
-   //(*_hanging_interpolator).print_matlab("hang_m.m");
 
-
-    // auto elapsed_di = std::chrono::duration<double, std::milli>(diff_di).count();
-    // std::cout<<"diff_di "<<elapsed_di<<std::endl;
-
-    // auto elapsed_re = std::chrono::duration<double, std::milli>(diff_re).count();
-    // std::cout<<"elapsed_re "<<elapsed_re<<std::endl;
-
-    // auto elapsed_ze = std::chrono::duration<double, std::milli>(diff_re).count();
-    // std::cout<<"elapsed_ze "<<elapsed_ze<<std::endl;
-
-    // exit(1);
    
     _console << "Assemble_Mass_matrix() end "  << std::endl;
-    //_interpolator->print_matlab("interp_marco");
-    //_hanging_vec->print_matlab("hv.m");
-    //_hanging_interpolator->print_matlab("Interp.m");
+
 
 }
 
-// Real
-// AssembleMassMatrix::ComputeMaterialProprties(const Elem *elem)
-// {
-// 	Real permeability=0.0;
-// 	for(int ll=0; ll<_vector_p.size(); ll++)
-// 	{
-// 		if (elem->subdomain_id()==_vector_p[ll])
-// 		{
-// 			permeability = _vector_value[ll];
-// 		}
-// 	}
-// 	return permeability;
-// }
+
+
 
 void
 AssembleMassMatrix::find_boundary(std::vector<int> &_dc_boundary_id){
@@ -356,15 +351,6 @@ AssembleMassMatrix::find_boundary(std::vector<int> &_dc_boundary_id){
   _console << "AssembleMassMatrix::find_boundary begin "  << std::endl;
 
 
-
-  for (int i=0; i<_dirichletFunctionNames.size(); ++i)
-  {
-    Function const & func=getFunctionByName( _dirichletFunctionNames.at(i) );
-    _dirichletFunctions.push_back(&func);
-  }
-
-
-
   ConstBndNodeRange & bnd_nodes = *_fe_problem.mesh().getBoundaryNodeRange();
 
   NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
@@ -373,7 +359,7 @@ AssembleMassMatrix::find_boundary(std::vector<int> &_dc_boundary_id){
 
   unsigned int i = 0;
 
-  StoreOperators & storeOperatorsUO=(_fe_problem.getUserObjectTempl<StoreOperators>(userObjectName));
+  StoreOperators & storeOperatorsUO=(_fe_problem.getUserObject<StoreOperators>(_userObjectName));
 
   _bc_vec                = storeOperatorsUO.BcVec();
 
@@ -420,12 +406,6 @@ AssembleMassMatrix::find_boundary(std::vector<int> &_dc_boundary_id){
                         if(std::find(_dc_variables_id[i].begin(), _dc_variables_id[i].end(), var_num) != _dc_variables_id[i].end())
                         {
 
-                          // different components are not supported by moose at the moment...
-                          //std::cout<<"kkkkkkkk"<< std::endl;
-                          //zero_rows.push_back(
-                           //   current_node->dof_number(_fe_problem.getNonlinearSystemBase().number(), var_num, 0));
-
-                          //std::cout<<"ciao"<<std::endl;
                           _bc_vec->set(current_node->dof_number(_fe_problem.getNonlinearSystemBase().number(), var_num, 0), 0.0);
                           _value_bc_vec->set(current_node->dof_number(_fe_problem.getNonlinearSystemBase().number(), var_num, 0), _value_D_bc.at(0));
                         }

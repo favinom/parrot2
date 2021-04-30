@@ -24,7 +24,7 @@ validParams<Advection>()
 
 Advection::Advection(const InputParameters & parameters)
 : Kernel(parameters),
-_U(getMaterialProperty<RealVectorValue>("VelocityVector"))
+_U(getMaterialProperty<RealVectorValue>("velocityProperty"))
 {}
 
 Real

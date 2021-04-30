@@ -12,6 +12,9 @@
 
 #include "GeneralUserObject.h"
 #include "StoreOperators.h"
+// Parrot includes
+#include "FlowAndTransport.h"
+#include "libmesh/linear_implicit_system.h"
 
 // Forward declarations
 class AssembleMassMatrix;
@@ -24,29 +27,59 @@ class AssembleMassMatrix : public GeneralUserObject
 public:
  AssembleMassMatrix(const InputParameters & params);
 
-  virtual void initialize() override {};
+  virtual void initialize() override;
   virtual void execute() override ;
   virtual void finalize() override {};
   virtual void threadJoin(const UserObject & ) override {};
-
+  static void getRow(PetscMatrix<Number> & matrix, int const & row, std::vector<Real> & values, std::vector<int> & columns)
+{
+    Mat const & mat=matrix.mat();
+    PetscInt ncol;
+    PetscInt const *col;
+    PetscScalar const *val;
+    MatGetRow(mat,row,&ncol,&col,&val);
+    values.resize(ncol);
+    columns.resize(ncol);
+    for (int i=0; i<ncol; ++i)
+    {
+        values[i] =val[i];
+        columns[i]=col[i];
+    }
+    MatRestoreRow(mat,row,&ncol,&col,&val);
+}
   protected:
 
-    std::vector<int> _vector_p;
-    std::vector<Real> _vector_value;
+    // std::vector<int> _vector_p;
+    // std::vector<Real> _vector_value;
+    std::string  _material_name;
 
-    UserObjectName const userObjectName;
+    std::vector< Parallel::Communicator const * > _pp_comm;
+
+
+    unsigned int _test_var;
+
+    UserObjectName const _userObjectName;
     StoreOperators * _storeOperatorsUO;
+    EquationSystems        * _equationSystemsM;
+    MeshBase               * _meshBase;
+    EquationSystems        * _equationSystemsT;
+    LinearImplicitSystem   * _linearImplicitSystemT;
+    DistributedMesh        * _mesh;
 
-    std::shared_ptr<PetscMatrix<Number>> _interpolator;
-    std::shared_ptr<PetscMatrix<Number>> _mass_matrix;
-    std::shared_ptr<PetscMatrix<Number>> _lump_mass_matrix;
-    std::shared_ptr<PetscMatrix<Number>> _poro_mass_matrix;
-    std::shared_ptr<PetscMatrix<Number>> _poro_lump_mass_matrix;
-    std::shared_ptr<PetscMatrix<Number>> _hanging_interpolator;
+    // std::shared_ptr<SparseMatrix<Number>> _interpolator;
+    // std::shared_ptr<PetscMatrix<Number>> _mass_matrix;
+    // std::shared_ptr<PetscMatrix<Number>> _lump_mass_matrix;
+    // std::shared_ptr<PetscMatrix<Number>> _poro_mass_matrix;
+    // std::shared_ptr<PetscMatrix<Number>> _poro_lump_mass_matrix;
+    // std::shared_ptr<PetscMatrix<Number>> _hanging_interpolator;
     std::shared_ptr<PetscVector<Number>> _hanging_vec;
 
     void assemble_mass_matrix();
-    Real ComputeMaterialProprties(const Elem *elem);
+    // Real ComputeMaterialProprties(const Elem *elem);
+
+
+    MaterialBase     * _materialBase;
+    FlowAndTransport * _flowAndTransport;
 
     bool const _constrainMatrices;
     bool const _code_dof_map;

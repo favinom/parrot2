@@ -35,7 +35,7 @@ _porosityBackInput(getParam<Real>("phi")),
 _porosityFracInput(getParam<Real>("phiFrac")),
 _gradP(parameters.isParamValid("pressure") ? coupledGradient("pressure"): _grad_zero),
 _Kscalar(declareProperty<Real>("conductivityProperty")),
-_phi(declareProperty<Real>("porosityPropery")),
+_phi(declareProperty<Real>("porosityProperty")),
 _U(declareProperty<RealVectorValue>("velocityProperty"))
 {
 
@@ -82,7 +82,7 @@ FlowAndTransport::computeQpProperties()
 {
 	getPermeabilityPoint( _q_point[_qp] , _Kscalar[_qp] );
 	getPorosityPoint    ( _q_point[_qp] , _phi[_qp]     );
-	_U[_qp]=-_Kscalar[_qp]*_gradP[_qp];
+	_U[_qp]=-1.0 * _Kscalar[_qp]*_gradP[_qp];
 }
 
 void FlowAndTransport::getPermeability(std::vector<Point> const & p , std::vector<Real> & permeability)

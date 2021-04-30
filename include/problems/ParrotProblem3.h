@@ -16,6 +16,7 @@
 #include "StoreOperators.h"
 
 #include "ParrotSolver.h"
+#include "libmesh/linear_implicit_system.h"
 
 class ParrotProblem3;
 
@@ -51,7 +52,7 @@ public:
     NumericVector<Number> & _sol_NV;
     
 
-    PetscMatrix<Number> _stab_matrix;
+    // PetscMatrix<Number> _stab_matrix;
 
     PetscVector<Number> _res_m;
     bool _use_afc;
@@ -60,14 +61,17 @@ public:
 
     std::vector<int> zero_rows;
     StoreOperators * _storeOperatorsUO;
-    AntidiffusiveFluxes *_ComputeAF;
+    // AntidiffusiveFluxes *_ComputeAF;
     bool _hasStoreOperatorsUO;
     bool _ComputeAntidiffusiveFluxes;
 
     UserObjectName * userObjectName;
     UserObjectName * userObjectNameFluxes;
 
-    std::shared_ptr<PetscMatrix<Number>> _poro_lumped;
+    EquationSystems        * _equationSystemsT;
+    LinearImplicitSystem   * _linearImplicitSystemT;
+
+    // std::shared_ptr<PetscMatrix<Number>> _poro_lumped;
 
     std::shared_ptr<PetscMatrix<Number>>   _JMatrix;
 
