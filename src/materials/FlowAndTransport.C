@@ -100,7 +100,7 @@ void FlowAndTransport::getPorosity(std::vector<Point> const & p , std::vector<Re
 	porosity.resize( p.size() );
 	for (int i=0; i<p.size(); ++i)
 	{
-		getPermeabilityPoint( p.at(i) , porosity.at(i) );
+		getPorosityPoint( p.at(i) , porosity.at(i) );
 	}
 }
 

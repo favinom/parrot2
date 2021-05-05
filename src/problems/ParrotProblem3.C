@@ -239,7 +239,7 @@ ParrotProblem3::solve()
 
     _sol_NV.add(_tmp_sol);
 
-  // _sol_NV.print_matlab();
+    //if (this->timeStep()==1) _sol_NV.print_matlab("sol.m");
 
     // bool exodus=false;
     // if (exodus==false){
@@ -282,6 +282,8 @@ ParrotProblem3::computeResidualSys(NonlinearImplicitSystem & /*sys*/,
     _res_m.zero();
     
     _poro_lumped.vector_mult(_res_m, soln);
+
+    //soln.print_matlab("sol_old.m");
     
     residual.pointwise_mult(_res_m,*_dirichlet_bc);
     
@@ -293,7 +295,7 @@ ParrotProblem3::computeResidualSys(NonlinearImplicitSystem & /*sys*/,
     
     residual.add(*_value_dirichlet_bc);
 
-    //residual.print_matlab("res.m");
+
 
     std::cout<<"ParrotProblem3::computeResidualSys END";
 

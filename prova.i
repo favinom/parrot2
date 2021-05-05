@@ -46,7 +46,7 @@ fa3_string = '0 0 16.2602 -15.8192 90 -90 0 0                 0.0            0.0
  type  = InclusionRefinement
  inclusions_list = inclusionsList
  doBoundaryRefinement = true
- refinements = '2 0'
+ refinements = '0 0'
 # outputFileName = mesh.e
 []
 
@@ -110,7 +110,7 @@ pressure=pressure2 inclusions_list = inclusionsList [../]
 
 
  dt = 0.01
- num_steps=2
+ num_steps=10
 
  [Quadrature] type = GRID   order = SEVENTH []
 

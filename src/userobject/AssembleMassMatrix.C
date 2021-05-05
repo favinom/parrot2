@@ -240,6 +240,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     			{
     				Me  (i,j)   +=  JxW[qp] * phi[i][qp] * phi[j][qp];
     				Me_p(i,j)   += poroVec.at(qp) * JxW[qp] * phi[i][qp] * phi[j][qp];
+            //std::cout<<"poroVec.at(qp)"<<poroVec.at(qp)<<std::endl;
     				Me_l(i,i)   += JxW[qp] * phi[i][qp] * phi[j][qp];
     				Me_l_p(i,i) += poroVec.at(qp) * JxW[qp] * phi[i][qp] * phi[j][qp];
             //Me_h(i,i)    = 0.5;
@@ -249,14 +250,14 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
     	if (_constrainMatrices)
     	{
-    		dof_map.constrain_element_matrix(Me,dof_indices,true);
-    		dof_map.constrain_element_matrix(Me_p,dof_indices_p,true);
-    		dof_map.constrain_element_matrix(Me_l,dof_indices_l,true);
-    		dof_map.constrain_element_matrix(Me_l_p,dof_indices_l_p,true);
+    		dof_map.constrain_element_matrix(Me,dof_indices);
+    		dof_map.constrain_element_matrix(Me_p,dof_indices_p);
+    		dof_map.constrain_element_matrix(Me_l,dof_indices_l);
+    		dof_map.constrain_element_matrix(Me_l_p,dof_indices_l_p);
     	}
     	{
-    		dof_map.constrain_element_matrix(Me_i,dof_indices_i,true);
-        dof_map.constrain_element_matrix(Me_h, dof_indices_h, true);
+    		dof_map.constrain_element_matrix(Me_i,dof_indices_i);
+        dof_map.constrain_element_matrix(Me_h, dof_indices_h);
       
 
         //std::cout<<"a"<<Me_h.m()<<"b"<<Me_h.n()<<"c"<<dof_indices_h.size()<<std::endl;
