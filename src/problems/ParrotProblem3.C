@@ -35,7 +35,7 @@ FEProblem(parameters),
 _pp_comm(_mesh.comm()),
 _equationSystems(this->es()),
 _nl_libMesh( _equationSystems.get_system<TransientNonlinearImplicitSystem>("nl0") ),
-_mat_SM(*_nl_libMesh.matrix),
+//_mat_SM(*_nl_libMesh.matrix),
 _rhs_NV(*_nl_libMesh.rhs),
 _sol_NV(_nl->solution()),
 // _stab_matrix(_pp_comm),
@@ -98,15 +98,18 @@ void ParrotProblem3::initialSetup()
               _regularNodes.init(dof_map.n_dofs(), dof_map.n_local_dofs());
         _scale_interpolator.init(dof_map.n_dofs(), dof_map.n_local_dofs());
 
-        SparseMatrix<Number> & _poro_lumped  = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("Poro_lump_mass_matrix");
+        SparseMatrix<Number> & _poro_lumped  = es().get_system<LinearImplicitSystem>("Transport").get_matrix("Poro_lump_mass_matrix");
 
-        SparseMatrix<Number> & _interpolator = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("Interpolator");
+        SparseMatrix<Number> & _interpolator = es().get_system<LinearImplicitSystem>("Transport").get_matrix("Interpolator");
         
         _ones=1;
+        
         _interpolator.vector_mult_add(_scale_interpolator,_ones);
+        
         _scale_interpolator.reciprocal();
 
         _dirichlet_bc = _storeOperatorsUO->BcVec();
+        
         _value_dirichlet_bc = _storeOperatorsUO->ValueBcVec();
 
         _value_dirichlet_bc->close();
@@ -162,6 +165,8 @@ ParrotProblem3::solve()
     
     std::cout<<"ParrotProblem3::Solve";
 
+
+
     if ( 0<_solverType && _solverType <4)
     {
             SparseMatrix <Number> * mat_SM = _nl_libMesh.matrix;
@@ -172,10 +177,11 @@ ParrotProblem3::solve()
 
         if (!_is_jac_matrix_assembled)
         {
-            std::cout<<"\n\nAssembling Jacobian and stabilization matrix...";
+            std::cout<<"\n\nAssembling Jacobian and stabilization matrix..."<<std::endl;
             auto t_start = std::chrono::high_resolution_clock::now();
             PetscMatrix<Number> * jac_SM =
             dynamic_cast<PetscMatrix<Number>*>(&es().get_system<TransientNonlinearImplicitSystem>("nl0").get_system_matrix());
+            //jac_SM->zero();
             computeJacobianSys(_nl_libMesh, *_nl->currentSolution(), *jac_SM);
             auto t_stop = std::chrono::high_resolution_clock::now();
             auto diff=std::chrono::duration<double, std::milli>(t_stop-t_start).count();
@@ -183,16 +189,20 @@ ParrotProblem3::solve()
             std::cout<<diff<<" ms\n";
 
             _is_jac_matrix_assembled=true;
-
-
+            SparseMatrix<Number>  * mat_SM = jac_SM;
+            //mat_SM->print_matlab("A.m");
             parrotSolver->setMatrixAndVectors(mat_SM,rhs_NV,sol_NV);
             parrotSolver->setConstantMatrix(_const_jacobian);
 
         }
         NumericVector<Number> & solOld=_nl->solutionOld() ;
         //computeResidualSys(_nl_libMesh, *_nl->currentSolution(),_rhs_NV);
+        
         computeResidualSys(_nl_libMesh, solOld ,_rhs_NV);
+        
         parrotSolver->solve();
+        
+        ParrotProblem3::converged();
 
         //_interpolator->vector_mult_add(_ones,_sol_NV);
         //_sol_NV.pointwise_mult(_ones,_scale_interpolator);
@@ -205,7 +215,7 @@ ParrotProblem3::solve()
 
     std::cout<<"ParrotProblem3::Solve End";
     
-    SparseMatrix<Number>  &_I = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("Hanging Interpolator");
+    SparseMatrix<Number>  &_I = es().get_system<LinearImplicitSystem>("Transport").get_matrix("Hanging Interpolator");
     
     auto _hv = _storeOperatorsUO->HangVec();
 
@@ -227,18 +237,24 @@ ParrotProblem3::solve()
 
     _sol_NV.zero();
 
-
-
     _sol_NV.add(_tmp_sol);
 
-    //_sol_NV.print_matlab();
+  // _sol_NV.print_matlab();
 
-    bool exodus=false;
-    if (exodus==false){
-        ExodusII_IO (es().get_mesh()).write_equation_systems("concOut.e", es());
-        exodus=true;
-    }
+    // bool exodus=false;
+    // if (exodus==false){
+    //     ExodusII_IO (es().get_mesh()).write_equation_systems("concOut.e", es());
+    //     exodus=true;
+    // }
 
+}
+
+
+bool
+ParrotProblem3::converged()
+{
+ 
+    return true;
 }
 
 
@@ -259,7 +275,7 @@ ParrotProblem3::computeResidualSys(NonlinearImplicitSystem & /*sys*/,
 
      std::cout<<"ParrotProblem3::computeResidualSys";
 
-    SparseMatrix<Number> & _poro_lumped  = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("Poro_lump_mass_matrix");
+    SparseMatrix<Number> & _poro_lumped  = es().get_system<LinearImplicitSystem>("Transport").get_matrix("Poro_lump_mass_matrix");
 
     // _poro_lumped.print_matlab();
 
@@ -270,12 +286,14 @@ ParrotProblem3::computeResidualSys(NonlinearImplicitSystem & /*sys*/,
     residual.pointwise_mult(_res_m,*_dirichlet_bc);
     
     Real inv_dt = 1.0/this->dt();
+
+    //residual.print_matlab();
     
     residual.scale(inv_dt);
     
     residual.add(*_value_dirichlet_bc);
 
-    residual.print_matlab();
+    //residual.print_matlab("res.m");
 
     std::cout<<"ParrotProblem3::computeResidualSys END";
 
@@ -288,7 +306,7 @@ ParrotProblem3::computeJacobianSys(NonlinearImplicitSystem & /*sys*/,
 {
     FEProblemBase::computeJacobian(soln, jacobian);
 
-    //jacobian.print_matlab();
+    //jacobian.print_matlab("J.m");
 
     std::cout<<"ParrotProblem3::computeJacobianSys";
 
@@ -297,7 +315,8 @@ ParrotProblem3::computeJacobianSys(NonlinearImplicitSystem & /*sys*/,
     {
         computeStabilizationMatrix(jacobian);
         
-        SparseMatrix<Number> & _stab_matrix  = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("_stab_matrix");
+        SparseMatrix<Number> & _stab_matrix  = es().get_system<LinearImplicitSystem>("Transport").get_matrix("_stab_matrix");
+    
         jacobian.add(1.0,_stab_matrix);
 
         // if (_ComputeAntidiffusiveFluxes){
@@ -321,7 +340,9 @@ ParrotProblem3::computeStabilizationMatrix(SparseMatrix<Number> & jacobian)
 
    //jac_PM->print_matlab();
    // Declare a PetscMatrix that will contain the transpose
+
     auto jac_tr_PM_tmp=jac_PM->zero_clone();
+ 
 
 
 
@@ -330,9 +351,9 @@ ParrotProblem3::computeStabilizationMatrix(SparseMatrix<Number> & jacobian)
     jac_PM->get_transpose (*jac_tr_PM_tmp);
 
 
-    auto &jac_tr_PM = dynamic_cast<PetscMatrix<Number>&>(*jac_tr_PM_tmp);
+    PetscMatrix<Number> &jac_tr_PM = dynamic_cast<PetscMatrix<Number>&>(*jac_tr_PM_tmp);
 
-    //jac_tr_PM->print_matlab();
+    //jac_tr_PM->print_matla();
         
     int rb=jac_PM->row_start();
     int re=jac_PM->row_stop();
@@ -343,9 +364,11 @@ ParrotProblem3::computeStabilizationMatrix(SparseMatrix<Number> & jacobian)
 
     // _stab_matrix.init();//m,n,m_l,n_l,30);
 
-    SparseMatrix<Number> & _stab_matrix  = es().get_system<LinearImplicitSystem>("Trasport").get_matrix("_stab_matrix");
+    SparseMatrix<Number> & _stab_matrix  = es().get_system<LinearImplicitSystem>("Transport").get_matrix("_stab_matrix");
 
     _stab_matrix.zero();
+    //_stab_matrix.flush();
+
     //MatSetOption(_stab_matrix_petsc, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
     
     std::vector<Real> values;
@@ -361,7 +384,8 @@ ParrotProblem3::computeStabilizationMatrix(SparseMatrix<Number> & jacobian)
         AssembleMassMatrix::getRow(*jac_PM,row,values,columns);
         AssembleMassMatrix::getRow(jac_tr_PM,row,values_tr,columns_tr);
 
-
+        
+  
         
         if (columns.size()!=columns_tr.size())
         {
@@ -392,20 +416,19 @@ ParrotProblem3::computeStabilizationMatrix(SparseMatrix<Number> & jacobian)
                 if (maxEntry>-1e-15)
                 {
                     Real value=-1.0*maxEntry;
-
-                    _stab_matrix.set(row,col,value);
-
-                    _stab_matrix.flush();
-
+                    _stab_matrix.add(row,col,value);
                     _stab_matrix.add(row,row,maxEntry);
 
-                    _stab_matrix.flush();
                 }
 
             }
         }
     }
-     _stab_matrix.close();
+
+
+    _stab_matrix.close();
+
+     //jacobian.add(1.0,_stab_matrix);
 
     //_stab_matrix.print_matlab();
 

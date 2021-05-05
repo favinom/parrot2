@@ -46,7 +46,7 @@ fa3_string = '0 0 16.2602 -15.8192 90 -90 0 0                 0.0            0.0
  type  = InclusionRefinement
  inclusions_list = inclusionsList
  doBoundaryRefinement = true
- refinements = '0 0'
+ refinements = '2 0'
 # outputFileName = mesh.e
 []
 
@@ -91,19 +91,15 @@ fa3_string = '0 0 16.2602 -15.8192 90 -90 0 0                 0.0            0.0
 []
 
 [Materials]
-[./flowAndTransport] type = FlowAndTransport k = 1.0 kFrac = 1.0e4 phi = 0.2 phiFrac = 0.2 inclusions_list = inclusionsList [../]
+[./flowAndTransport] type = FlowAndTransport k = 1.0 kFrac = 1.0e4 phi = 0.2 phiFrac = 0.2 
+pressure=pressure2 inclusions_list = inclusionsList [../]
 []
 
 [BCs]
-[./u_injection_left] type = DirichletBC boundary = bottom  variable = CM value='1' [../]
+[./u_injection_left] type = DirichletBC boundary = 11  variable = CM value='1' [../]
 []
 
-[Preconditioning]
-[./SMP]
-type = SMP
-full = true
-[../]
-[]
+
 
 [Executioner]
 
@@ -111,23 +107,14 @@ full = true
  solve_type= LINEAR
  line_search = none
  
- #petsc_options_iname = '-pc_type -pc_hypre_type'
- #petsc_options_value = 'hypre boomeramg'
 
- #petsc_options_iname=' -ksp_type            '   # -mat_view
- #petsc_options_value='  ksp_parrot_preonly  '   # ::ascii_matlab
- #petsc_options_iname = '-ksp_gmres_restart -pc_type -pc_hypre_type -pc_hypre_boomeramg_max_iter'
- #petsc_options_value = '  201               hypre    boomeramg      10'
- petsc_options_iname   = ' -ksp_type -pc_type -pc_factor_shift_type -pc_factor_mat_solver_package '
- petsc_options_value   = '  preonly   lu       NONZERO               mumps '
- 
+
  dt = 0.01
- num_steps=1
+ num_steps=2
 
-[Quadrature] type = GRID [] # order = SEVENTH
-  l_abs_tol = 1e-4
-  petsc_options = '-snes_converged_reason'
-  abort_on_solve_fail = true
+ [Quadrature] type = GRID   order = SEVENTH []
+
+
 
 []
 
@@ -173,6 +160,6 @@ value_D_bc='1.0'
 
 [Outputs]
  file_base = output
- #nemesis = true
+ exodus = true
 []
 

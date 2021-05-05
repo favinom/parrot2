@@ -83,6 +83,7 @@ FlowAndTransport::computeQpProperties()
 	getPermeabilityPoint( _q_point[_qp] , _Kscalar[_qp] );
 	getPorosityPoint    ( _q_point[_qp] , _phi[_qp]     );
 	_U[_qp]=-1.0 * _Kscalar[_qp]*_gradP[_qp];
+	//std::cout<<"FlowAndTransport::computeQpProperties()"<<	_gradP[_qp]<<std::endl;
 }
 
 void FlowAndTransport::getPermeability(std::vector<Point> const & p , std::vector<Real> & permeability)

@@ -94,7 +94,7 @@ void AssembleMassMatrix::initialize()
 
     _pp_comm.push_back( &_meshBase[0].comm() );
 
-    _linearImplicitSystemT = &_equationSystemsT->add_system<LinearImplicitSystem> ("Trasport");
+    _linearImplicitSystemT = &_equationSystemsT->add_system<LinearImplicitSystem> ("Transport");
 
     _test_var = _linearImplicitSystemT[0].add_variable ("test_var", FIRST);
 
@@ -131,7 +131,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
 
 
-    _linearImplicitSystemT = &_equationSystemsT->get_system<LinearImplicitSystem> ("Trasport");
+    _linearImplicitSystemT = &_equationSystemsT->get_system<LinearImplicitSystem> ("Transport");
 
 
 

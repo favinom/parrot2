@@ -28,6 +28,7 @@ _Kscalar(getMaterialProperty<Real>("conductivityProperty"))
 Real
 PermeabilityDiffusion::computeQpResidual()
 {
+
   return _Kscalar[_qp] * _grad_u[_qp] * _grad_test[_i][_qp];
 }
 

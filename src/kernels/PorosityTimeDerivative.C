@@ -36,6 +36,7 @@ PorosityTimeDerivative::computeQpResidual()
 {
     // We're reusing the TimeDerivative Kernel's residual
     // so that we don't have to recode that.
+
     return _poro[_qp] * TimeDerivative::computeQpResidual();
 }
 

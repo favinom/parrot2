@@ -47,9 +47,10 @@ public:
     Parallel::Communicator const & _pp_comm;
     EquationSystems & _equationSystems;
     TransientNonlinearImplicitSystem & _nl_libMesh;
-    SparseMatrix <Number> & _mat_SM;
+    //SparseMatrix <Number> & _mat_SM;
     NumericVector<Number> & _rhs_NV;
     NumericVector<Number> & _sol_NV;
+    bool converged();
     
 
     // PetscMatrix<Number> _stab_matrix;

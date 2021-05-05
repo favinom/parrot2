@@ -30,6 +30,7 @@ _U(getMaterialProperty<RealVectorValue>("velocityProperty"))
 Real
 Advection::computeQpResidual()
 {
+        
          return _grad_u[_qp] * ( _U[_qp] * _test[_i][_qp] );
 
 }
@@ -38,5 +39,6 @@ Advection::computeQpResidual()
 Real
 Advection::computeQpJacobian()
 {
+          
         return _grad_phi[_j][_qp] * ( _U[_qp] * _test[_i][_qp] );
 }
