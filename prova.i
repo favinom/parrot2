@@ -96,7 +96,7 @@ pressure=pressure2 inclusions_list = inclusionsList [../]
 []
 
 [BCs]
-[./u_injection_left] type = DirichletBC boundary = 11  variable = CM value='1' [../]
+[./u_injection_left] type = DirichletBC boundary = 11  variable = CM value=1 [../]
 []
 
 
