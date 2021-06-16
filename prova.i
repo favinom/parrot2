@@ -152,7 +152,7 @@ value_D_bc='1.0'
 
 [./volume]
   type = ElementIntegralVolumePostprocessor
-  fractureRegionId = 1
+  fractureRegionId = 0
   inclusions_list = inclusionsList
 #  fractureMeshModifier =  fractureUserObject
 #  execute_on = 'initial'

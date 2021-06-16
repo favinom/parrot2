@@ -53,7 +53,7 @@ ElementIntegralVolumePostprocessor::computeQpIntegral()
       check = which.at(i);
 
       if(check ==_regionId){
-        bool_rg==true;
+        bool_rg=true;
       }
       
       i++;
@@ -61,7 +61,7 @@ ElementIntegralVolumePostprocessor::computeQpIntegral()
     
      }
 
-    std::cout<<bool_rg<<std::endl;   
+    //std::cout<<bool_rg<<std::endl;   
    
    if (bool_rg==true)
      return 1.0;
