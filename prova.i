@@ -110,7 +110,7 @@ pressure=pressure2 inclusions_list = inclusionsList [../]
 
 
  dt = 0.01
- num_steps=10
+ num_steps=2
 
  [Quadrature] type = GRID   order = SEVENTH []
 
@@ -148,15 +148,25 @@ dc_variables='CM'
 value_D_bc='1.0'
 [../]
 
+[]
 
+[Postprocessors]
 
 [./volume]
-  type = ElementIntegralVolumePostprocessor
-  fractureRegionId = 0
-  inclusions_list = inclusionsList
-#  fractureMeshModifier =  fractureUserObject
-#  execute_on = 'initial'
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 0
+inclusions_list = inclusionsList
+execute_on = 'initial'
 [../]
+
+[./c9]
+type = ElementIntegralConcentrationPostprocessor
+fractureRegionId = 0
+inclusions_list = inclusionsList
+variable = CM
+execute_on = 'timestep_end'
+[../]
+
 []
 
 
