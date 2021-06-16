@@ -46,7 +46,7 @@ fa3_string = '0 0 16.2602 -15.8192 90 -90 0 0                 0.0            0.0
  type  = InclusionRefinement
  inclusions_list = inclusionsList
  doBoundaryRefinement = true
- refinements = '0 0'
+ refinements = '2 0'
 # outputFileName = mesh.e
 []
 
@@ -148,6 +148,15 @@ dc_variables='CM'
 value_D_bc='1.0'
 [../]
 
+
+
+[./volume]
+  type = ElementIntegralVolumePostprocessor
+  fractureRegionId = 1
+  inclusions_list = inclusionsList
+#  fractureMeshModifier =  fractureUserObject
+#  execute_on = 'initial'
+[../]
 []
 
 
