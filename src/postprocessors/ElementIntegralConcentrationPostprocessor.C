@@ -54,31 +54,19 @@ ElementIntegralConcentrationPostprocessor::computeQpIntegral()
 
     std::vector<unsigned int> which=inclusionsMeshModifier.whichIsInside( _q_point[_qp] );
 
-    unsigned int check = 0;
+    unsigned int check=0;
 
-    bool bool_rg = false;
-
-    int i = 0;
-
-    while (i<which.size() && bool_rg==false)
+    if ( which.size()>0 )
     {
-      
-      check = which.at(i);
+    for (int i=0; i<which.size(); ++i)
+    {
+      check= which.at(i);
+    }
+    }
 
-      if(check ==_regionId){
-        bool_rg=true;
-      }
-      
-      i++;
-
-    
-     }
-
-    //std::cout<<bool_rg<<std::endl;   
-   
-   if (bool_rg==true)
-     return _u[_qp];
-   else 
-     return 0.0;
+    if(check==_regionId)
+    return _u[_qp];
+    else
+    return 0.0;
 }
 

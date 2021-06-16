@@ -152,20 +152,92 @@ value_D_bc='1.0'
 
 [Postprocessors]
 
-[./volume]
+
+[./volume0]
 type = ElementIntegralVolumePostprocessor
 fractureRegionId = 0
-inclusions_list = inclusionsList
-execute_on = 'initial'
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
 [../]
 
-[./c9]
-type = ElementIntegralConcentrationPostprocessor
-fractureRegionId = 0
-inclusions_list = inclusionsList
-variable = CM
-execute_on = 'timestep_end'
+
+[./volume1]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 1
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
 [../]
+
+[./volume2]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 2
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+
+[./volume3]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 3
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+[./volume4]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 4
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+
+[./volume5]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 5
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+
+[./volume6]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 6
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+
+
+[./volume7]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 7
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+
+
+[./volume8]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 8
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
+[./Concentration9]
+type = ElementIntegralConcentrationPostprocessor
+variable = CM
+fractureRegionId = 9
+ inclusions_list = inclusionsList
+[../]
+
+[./volume9]
+type = ElementIntegralVolumePostprocessor
+fractureRegionId = 9
+  inclusions_list = inclusionsList
+#  execute_on = 'initial'
+[../]
+
 
 []
 
