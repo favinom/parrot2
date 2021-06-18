@@ -52,19 +52,32 @@ ElementIntegralConcentrationPostprocessor::computeQpIntegral()
     MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
     InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
 
-    std::vector<unsigned int> which=inclusionsMeshModifier.whichIsInside( _q_point[_qp] );
+    std::vector<unsigned int> which = inclusionsMeshModifier.whichIsInside( _q_point[_qp] );
 
-    unsigned int check=0;
+    unsigned int check = 0;
 
-    if ( which.size()>0 )
+    bool bool_rg = false;
+
+    int i = 0;
+
+    while (i<which.size() && bool_rg==false)
     {
-    for (int i=0; i<which.size(); ++i)
-    {
-      check= which.at(i);
-    }
-    }
+      
+      check = which.at(i);
+      //std::cout<<"check="<<check<<std::endl;
 
-    if(check==_regionId)
+      if(check ==_regionId){
+        bool_rg=true;
+      }
+      
+      i++;
+
+
+     }
+
+    //std::cout<<bool_rg<<std::endl;   
+
+    if (bool_rg==true)
     return _u[_qp];
     else
     return 0.0;

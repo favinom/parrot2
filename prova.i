@@ -162,7 +162,7 @@ execute_on = 'initial'
 [./volume0]
 type = ElementIntegralVolumePostprocessor
 fractureRegionId = 0
-  inclusions_list = inclusionsList
+inclusions_list = inclusionsList
 #  execute_on = 'initial'
 [../]
 
@@ -200,8 +200,8 @@ fractureRegionId = 4
 [./volume5]
 type = ElementIntegralVolumePostprocessor
 fractureRegionId = 5
-  inclusions_list = inclusionsList
-#  execute_on = 'initial'
+inclusions_list = inclusionsList
+#execute_on = 'initial'
 [../]
 
 
@@ -214,39 +214,23 @@ fractureRegionId = 6
 
 
 
+
 [./volume7]
 type = ElementIntegralVolumePostprocessor
 fractureRegionId = 7
-  inclusions_list = inclusionsList
+inclusions_list = inclusionsList
 #  execute_on = 'initial'
 [../]
 
-
-
-[./volume8]
-type = ElementIntegralVolumePostprocessor
-fractureRegionId = 8
-  inclusions_list = inclusionsList
-#  execute_on = 'initial'
-[../]
-
-[./Concentration0]
+[./Concentration9]
 type = ElementIntegralConcentrationPostprocessor
 variable = CM
 fractureRegionId = 0
- inclusions_list = inclusionsList
+inclusions_list = inclusionsList
 [../]
 
-[./volume9]
-type = ElementIntegralVolumePostprocessor
-fractureRegionId = 9
-  inclusions_list = inclusionsList
-#  execute_on = 'initial'
-[../]
 
- [./int0] type = IntegralSolutionOverRegionFast region = 0 doDomainSize = 0 VolumeUserObject = assembleVolumeVectors [../]
-
- [./intc0] type = IntegralSolutionOverRegionFast region = 0 doDomainSize = 1 VolumeUserObject = assembleVolumeVectors [../]
+[./v0fast] type = IntegralSolutionOverRegionFast region = 0 doDomainSize = 1 VolumeUserObject = assembleVolumeVectors [../]
 []
 
 

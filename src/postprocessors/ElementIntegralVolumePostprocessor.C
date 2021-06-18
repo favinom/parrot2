@@ -51,6 +51,7 @@ ElementIntegralVolumePostprocessor::computeQpIntegral()
     {
       
       check = which.at(i);
+      //std::cout<<"check="<<check<<std::endl;
 
       if(check ==_regionId){
         bool_rg=true;
