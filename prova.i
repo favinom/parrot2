@@ -148,6 +148,12 @@ dc_variables='CM'
 value_D_bc='1.0'
 [../]
 
+[./assembleVolumeVectors]
+type=AssembleVolumeVectors
+inclusions_list = inclusionsList
+execute_on = 'initial'
+[../]
+
 []
 
 [Postprocessors]
@@ -224,10 +230,10 @@ fractureRegionId = 8
 #  execute_on = 'initial'
 [../]
 
-[./Concentration9]
+[./Concentration0]
 type = ElementIntegralConcentrationPostprocessor
 variable = CM
-fractureRegionId = 9
+fractureRegionId = 0
  inclusions_list = inclusionsList
 [../]
 
@@ -238,7 +244,9 @@ fractureRegionId = 9
 #  execute_on = 'initial'
 [../]
 
+ [./int0] type = IntegralSolutionOverRegionFast region = 0 doDomainSize = 0 VolumeUserObject = assembleVolumeVectors [../]
 
+ [./intc0] type = IntegralSolutionOverRegionFast region = 0 doDomainSize = 1 VolumeUserObject = assembleVolumeVectors [../]
 []
 
 
