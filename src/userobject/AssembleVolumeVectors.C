@@ -120,25 +120,30 @@ void AssembleVolumeVectors::execute()
     {
       Re.at(i).resize(loc_n);
       Re.at(i).zero();
-      coeff.at(i).resize( qrule->n_points() );
+      coeff.at(i).assign( qrule->n_points(),0.0 );
     }
 
     Real ze=0.0;
+    
+   
     for (int qp=0; qp<qrule->n_points(); ++qp)
     {
-        
+          
       std::vector<unsigned int> which = inclusionsMeshModifier.whichIsInside( q_points[qp] );   
-      // for (int i=0; i<_fn; ++i){
-        for (int j=0; j<which.size(); ++j){     
+           
+        for (int j=0; j<which.size(); ++j) {     
           int d_id = which.at(j);
-          // if(d_id == i){
-            coeff.at(d_id).at(qp) = 1.0;
-          // }
-          // else{
-          //   coeff.at(i).at(qp) = 0.0;
-          // }
-        //}
-      }
+          coeff.at(d_id).at(qp)=1.0;
+        }
+      
+      //     if(d_id == i){
+      //       coeff.at(i).at(qp) = 1.0;
+      //     }
+      //     else{
+                  
+      //     }
+      //   }
+      
     }
 
     for (unsigned int i=0; i<phi.size(); i++)

@@ -222,7 +222,7 @@ inclusions_list = inclusionsList
 #  execute_on = 'initial'
 [../]
 
-[./Concentration9]
+[./Concentration0]
 type = ElementIntegralConcentrationPostprocessor
 variable = CM
 fractureRegionId = 0
