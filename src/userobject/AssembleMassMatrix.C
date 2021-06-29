@@ -99,10 +99,10 @@ void AssembleMassMatrix::initialize()
     _test_var = _linearImplicitSystemT[0].add_variable ("test_var", FIRST);
 
     SparseMatrix<Number> & _interpolator = _linearImplicitSystemT[0].add_matrix("Interpolator");
-    SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].add_matrix("MassMatrix");
-    SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Poro_mass_matrix");
+    // SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].add_matrix("MassMatrix");
+    // SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Poro_mass_matrix");
 
-    SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Lump_mass_matrix");
+    // SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Lump_mass_matrix");
     SparseMatrix<Number> & _poro_lump_mass_matrix  = _linearImplicitSystemT[0].add_matrix("Poro_lump_mass_matrix");
     SparseMatrix<Number> & _hanging_interpolator  = _linearImplicitSystemT[0].add_matrix("Hanging Interpolator");
     SparseMatrix<Number> & _stab_matrix  =  _linearImplicitSystemT[0].add_matrix("_stab_matrix");
@@ -136,10 +136,10 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
 
     SparseMatrix<Number> & _interpolator = _linearImplicitSystemT[0].get_matrix("Interpolator");
-    SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].get_matrix("MassMatrix");
-    SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Poro_mass_matrix");
+    // SparseMatrix<Number> & _mass_matrix  = _linearImplicitSystemT[0].get_matrix("MassMatrix");
+    // SparseMatrix<Number> & _poro_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Poro_mass_matrix");
 
-    SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Lump_mass_matrix");
+    // SparseMatrix<Number> & _lump_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Lump_mass_matrix");
     SparseMatrix<Number> & _poro_lump_mass_matrix  = _linearImplicitSystemT[0].get_matrix("Poro_lump_mass_matrix");
     SparseMatrix<Number> & _hanging_interpolator  = _linearImplicitSystemT[0].get_matrix("Hanging Interpolator");
 
@@ -168,26 +168,26 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     const std::vector<Point>& q_points = fe->get_xyz();
     //const DofMap& dof_map = system.get_dof_map();
 
-    std::vector<dof_id_type> dof_indices;
-    std::vector<dof_id_type> dof_indices_l;
-    std::vector<dof_id_type> dof_indices_p;
+    // std::vector<dof_id_type> dof_indices;
+    // std::vector<dof_id_type> dof_indices_l;
+    // std::vector<dof_id_type> dof_indices_p;
     std::vector<dof_id_type> dof_indices_l_p;
     std::vector<dof_id_type> dof_indices_i;
     std::vector<dof_id_type> dof_indices_h;
 
-    DenseMatrix<Number> Me;
-    DenseMatrix<Number> Me_p;
-    DenseMatrix<Number> Me_l;
+    // DenseMatrix<Number> Me;
+    // DenseMatrix<Number> Me_p;
+    // DenseMatrix<Number> Me_l;
     DenseMatrix<Number> Me_l_p;
     DenseMatrix<Number> Me_i, Me_h;
   
 
     _interpolator.zero();
-    _mass_matrix.zero();
-    _poro_mass_matrix.zero();
-    _lump_mass_matrix.zero();
+    // _mass_matrix.zero();
+    // _poro_mass_matrix.zero();
+    // _lump_mass_matrix.zero();
     _poro_lump_mass_matrix.zero();
-    _poro_mass_matrix.zero();
+    // _poro_mass_matrix.zero();
 
       
 
@@ -203,26 +203,26 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     	const Elem * elem = *el;
     	fe->reinit (elem);
 
-    	dof_map.dof_indices(elem, dof_indices);
-    	dof_map.dof_indices(elem, dof_indices_l);
-    	dof_map.dof_indices(elem, dof_indices_p);
+    	// dof_map.dof_indices(elem, dof_indices);
+    	// dof_map.dof_indices(elem, dof_indices_l);
+    	// dof_map.dof_indices(elem, dof_indices_p);
     	dof_map.dof_indices(elem, dof_indices_l_p);
     	dof_map.dof_indices(elem, dof_indices_i);
       dof_map.dof_indices(elem, dof_indices_h);
 
-    	int const loc_n=dof_indices.size();
+    	int const loc_n=dof_indices_l_p.size();
 
 
-    	Me.resize(loc_n,loc_n);
-    	Me_p.resize(loc_n,loc_n);
-    	Me_l.resize(loc_n,loc_n);
+    	// Me.resize(loc_n,loc_n);
+    	// Me_p.resize(loc_n,loc_n);
+    	// Me_l.resize(loc_n,loc_n);
     	Me_l_p.resize(loc_n,loc_n);
     	Me_i.resize(loc_n,loc_n);
       Me_h.resize(loc_n,loc_n);
 
-    	Me.zero();
-    	Me_p.zero();
-    	Me_l.zero();
+    	// Me.zero();
+    	// Me_p.zero();
+    	// Me_l.zero();
     	Me_l_p.zero();
     	Me_i.zero();
       Me_h.zero();
@@ -238,10 +238,10 @@ void AssembleMassMatrix::assemble_mass_matrix(){
     		{
     			for (unsigned int qp=0; qp<qrule->n_points(); qp++)
     			{
-    				Me  (i,j)   +=  JxW[qp] * phi[i][qp] * phi[j][qp];
-    				Me_p(i,j)   += poroVec.at(qp) * JxW[qp] * phi[i][qp] * phi[j][qp];
-            //std::cout<<"poroVec.at(qp)"<<poroVec.at(qp)<<std::endl;
-    				Me_l(i,i)   += JxW[qp] * phi[i][qp] * phi[j][qp];
+    				// Me  (i,j)   +=  JxW[qp] * phi[i][qp] * phi[j][qp];
+    				// Me_p(i,j)   += poroVec.at(qp) * JxW[qp] * phi[i][qp] * phi[j][qp];
+        //     //std::cout<<"poroVec.at(qp)"<<poroVec.at(qp)<<std::endl;
+    				// Me_l(i,i)   += JxW[qp] * phi[i][qp] * phi[j][qp];
     				Me_l_p(i,i) += poroVec.at(qp) * JxW[qp] * phi[i][qp] * phi[j][qp];
             //Me_h(i,i)    = 0.5;
     			}
@@ -250,9 +250,9 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
     	if (_constrainMatrices)
     	{
-    		dof_map.constrain_element_matrix(Me,dof_indices);
-    		dof_map.constrain_element_matrix(Me_p,dof_indices_p);
-    		dof_map.constrain_element_matrix(Me_l,dof_indices_l);
+    		// dof_map.constrain_element_matrix(Me,dof_indices);
+    		// dof_map.constrain_element_matrix(Me_p,dof_indices_p);
+    		// dof_map.constrain_element_matrix(Me_l,dof_indices_l);
     		dof_map.constrain_element_matrix(Me_l_p,dof_indices_l_p);
     	}
     	{
@@ -269,7 +269,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
            {
             if(Me_h(i,j)==1){
 
-              _hanging_vec->set(dof_indices.at(i),0.0);
+              _hanging_vec->set(dof_indices_h.at(i),0.0);
 
             }
             if (Me_h(i,j)<0){
@@ -283,7 +283,7 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
               Real value = -1.0 * Me_h(i,j);
               
-              _hanging_interpolator.set(dof_indices.at(i),dof_indices.at(j),value);
+              _hanging_interpolator.set(dof_indices_h.at(i),dof_indices_h.at(j),value);
 
             }
           }
@@ -314,9 +314,9 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
       
 
-    	(_mass_matrix).add_matrix(Me, dof_indices);
-    	(_poro_mass_matrix).add_matrix (Me_p, dof_indices_p);
-    	(_lump_mass_matrix).add_matrix (Me_l, dof_indices_l);
+    	// (_mass_matrix).add_matrix(Me, dof_indices);
+    	// (_poro_mass_matrix).add_matrix (Me_p, dof_indices_p);
+    	// (_lump_mass_matrix).add_matrix (Me_l, dof_indices_l);
     	(_poro_lump_mass_matrix).add_matrix (Me_l_p, dof_indices_l_p);
     	(_interpolator).add_matrix (Me_i, dof_indices_i);
 
@@ -325,10 +325,10 @@ void AssembleMassMatrix::assemble_mass_matrix(){
 
 
 
-   (_mass_matrix).close();
-   (_poro_mass_matrix).close();
+   // (_mass_matrix).close();
+   // (_poro_mass_matrix).close();
    (_poro_lump_mass_matrix).close();
-   (_lump_mass_matrix).close();
+   // (_lump_mass_matrix).close();
    (_interpolator).close();
    (_hanging_interpolator).close();
 
