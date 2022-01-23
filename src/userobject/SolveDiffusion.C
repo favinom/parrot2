@@ -23,7 +23,6 @@
 #include "helpers.h"
 
 
-
 registerMooseObject("parrot2App", SolveDiffusion);
 
 defineLegacyParams(SolveDiffusion);
@@ -50,6 +49,10 @@ InputParameters SolveDiffusion::validParams()
 
   params.addParam<std::string>("variable_name", "the variable name of the output");
 
+  params.addParam<bool>("finite_difference",false, "do we run with a finite difference method?");
+
+  params.addParam<bool>("local_algebraic_stabilization",false, "do we run with algebraic stabilization?");
+
   return params;
 }
 
@@ -64,19 +67,9 @@ _neumannFunctionNames  ( getParam<std::vector<FunctionName> >("neumann_function_
 _solverType(getParam<int>("solver_type")),
 _has_exodus_file(  isParamValid("exodus_file")  ),
 _has_nemesis_file( isParamValid("nemesis_file") ),
-_has_variable_name( isParamValid("variable_name") )
-/*
-_aux_var_names(getParam<std::vector<AuxVariableName>>("aux_variable")),
-_vector_p(getParam<std::vector<int>>("block_id")),
-_vector_value(getParam<std::vector<Real>>("value_p")),
-_boundary_D_ids(getParam<std::vector<boundary_id_type>>("boundary_D_bc")),
-_boundary_N_ids(getParam<std::vector<boundary_id_type>>("boundary_N_bc")),
-_value_N_bc(getParam<std::vector<Real>>("value_N_bc")),
-_value_D_bc(getParam<std::vector<Real>>("value_D_bc")),
-
-_hasMeshModifier( isParamValid("fractureMeshModifier") ),
-_conservativeScheme( getParam<bool>("conservative") ),
-*/
+_has_variable_name( isParamValid("variable_name") ),
+_finite_difference( getParam<bool>("finite_difference") ),
+_local_algebraic_stabilization( getParam<bool>("local_algebraic_stabilization") )
 {
   _sys_name="Diffusion";
   _var_name="pressure";
@@ -99,13 +92,6 @@ _conservativeScheme( getParam<bool>("conservative") ),
   }
 }
 
-  // Parallel::Communicator const & pp_comm=meshBaseM.comm();
-  // _mesh=new DistributedMesh(pp_comm);
-  // _mesh[0].read("mesh.xda");
-  // _meshBase=_mesh;
-//  MeshBase & meshBaseM=_equationSystemsM[0].get_mesh();
-
-
 void SolveDiffusion::init()
 {
   std::cout<<"SolveDiffusion::init() start\n";
@@ -119,7 +105,8 @@ void SolveDiffusion::init()
   _linearImplicitSystemP = &_equationSystemsP[0].add_system<LinearImplicitSystem> (_sys_name.c_str());
   _p_var = _linearImplicitSystemP[0].add_variable (_var_name.c_str(), FIRST);
   
-  SparseMatrix<Number> & I=_linearImplicitSystemP[0].add_matrix("interpolator");
+  //SparseMatrix<Number> & I=_linearImplicitSystemP[0].add_matrix("interpolator");
+  _linearImplicitSystemP[0].add_matrix("interpolator");
 
   _linearImplicitSystemP[0].add_vector("solution_temp");
   _linearImplicitSystemP[0].add_vector("rhs");
@@ -300,7 +287,16 @@ void SolveDiffusion::assemble()
   FEType fe_type = _dof_map[0].variable_type(0);
   
   std::unique_ptr<FEBase> fe (FEBase::build(_dim, fe_type));
-  std::unique_ptr<QBase> qrule( QBase::build (_qrule->type(),_dim,_qrule->get_order()));
+  //std::unique_ptr<QBase> qrule( QBase::build (_qrule->type(),_dim,_qrule->get_order()));
+
+  //std::unique_ptr<QBase> qrule( QBase::build (QTRAP,_dim,FIRST));
+  std::unique_ptr<QBase> qrule;
+
+  if (_finite_difference==false)
+    qrule=std::unique_ptr<QBase>( QBase::build (_qrule->type(),_dim,_qrule->get_order()));
+  else
+    qrule=std::unique_ptr<QBase>( QBase::build (QTRAP,         _dim,FIRST));
+
   fe->attach_quadrature_rule (qrule.get());
 
   std::unique_ptr<FEBase> fe_face (FEBase::build(_dim, fe_type));
@@ -314,7 +310,7 @@ void SolveDiffusion::assemble()
 
   std::vector<Real>                       const & JxW_face      = fe_face->get_JxW();
   std::vector<std::vector<Real> >         const & phi_face      = fe_face->get_phi();
-  std::vector<std::vector<RealGradient> > const & dphi_face     = fe_face->get_dphi();
+  //std::vector<std::vector<RealGradient> > const & dphi_face     = fe_face->get_dphi();
   std::vector<Point>                      const & q_points_face = fe_face->get_xyz();
 
   std::vector<dof_id_type> dof_indices;
@@ -346,7 +342,36 @@ void SolveDiffusion::assemble()
     ke_I.resize (n_dofs , n_dofs);
     ke_I.zero();
 
-    _flowAndTransport[0].getPermeability(q_points,permeability);
+    if (_finite_difference)
+    {
+      std::vector<Point> q_points_FD;
+
+      for (int i=0; i<q_points.size(); ++i)
+        q_points_FD.push_back( elem->centroid() );
+
+      if (q_points.size()!=q_points_FD.size())
+      {
+        std::cout<<"ERROR: q_points.size()!=q_points_FD.size() \n";
+        exit(1);
+      }
+      _flowAndTransport[0].getPermeability(q_points_FD,permeability);
+
+      for (int i=1; i<q_points_FD.size(); ++i)
+      {
+        Real diff=permeability.at(0)-permeability.at(i);
+        diff=std::fabs(diff);
+        if (diff>1e-12)
+        {
+          std::cout<<"ERROR: diff>1e-12 \n";
+          exit(1); 
+        }
+      }
+
+    }
+    else
+      _flowAndTransport[0].getPermeability(q_points,permeability);
+
+    
 
     for (unsigned int i=0; i<phi.size(); i++)
       for (unsigned int j=0; j<phi.size(); j++)
@@ -354,6 +379,39 @@ void SolveDiffusion::assemble()
         {
           ke(i,j) +=  JxW[qp] * ( dphi[j][qp] * ( permeability.at(qp) *  dphi[i][qp] ) );
         }
+
+    if (_local_algebraic_stabilization)
+    {
+      int m=ke.m();
+      int n=ke.n();
+
+      DenseMatrix<Number> S;
+      S.resize (m , n);
+      S.zero();
+
+      for (int i=0; i<m; ++i)
+        for (int j=i+1; j<n; ++j)
+        {
+          Real ed1=ke(i,j);
+          Real ed2=ke(j,i);
+          if (ed1<0.0 && ed2<0.0)
+          {
+
+          }
+          else
+          {
+            Real m=std::max(ed1,ed2);
+            S(i,j)-=m;
+            S(j,i)-=m;
+            S(i,i)+=m;
+            S(j,j)+=m;
+          }
+        }
+        for (int i=0; i<m; ++i)
+          for (int j=0; j<n; ++j)
+            ke(i,j)+=S(i,j);
+    }
+
 
     for (auto side : elem->side_index_range())
     {

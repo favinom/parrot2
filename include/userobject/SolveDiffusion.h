@@ -104,24 +104,8 @@ public:
   std::string _variable_name;
 
   std::vector<dof_id_type>  _dirIds;
-    // std::vector<AuxVariableName> _aux_var_names;
 
-    // AuxVariableName _aux_var_name;
-
-    // std::vector<int> _vector_p;
-    // std::vector<Real> _vector_value;
-    // std::vector<boundary_id_type> _boundary_D_ids;
-    // std::vector<boundary_id_type> _boundary_N_ids;
-    // std::vector<Real> _value_N_bc;
-    // std::vector<Real> _value_D_bc;
-
-    // void AssembleDiffusionOP(EquationSystems & _es, const std::string & system_name);
-
-    // Real ComputeMaterialProprties(const Elem *elem);
-
-    // int solve(EquationSystems & _es);
-
-    // void set_solution(EquationSystems & _es);
-
+  bool _finite_difference;
+  bool _local_algebraic_stabilization;
 };
 
