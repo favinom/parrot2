@@ -44,6 +44,8 @@ TENSOR_MECHANICS            := no
 XFEM                        := no
 
 include $(MOOSE_DIR)/modules/modules.mk
+
+include parrot.mk
 ###############################################################################
 
 # dep apps
@@ -55,3 +57,11 @@ include            $(FRAMEWORK_DIR)/app.mk
 
 ###############################################################################
 # Additional special case targets should be added here
+
+include $(UTOPIA_FE_DIR)/config/utopia_fe_config.makefile
+
+ADDITIONAL_INCLUDES+=$(UTOPIA_FE_INCLUDES)
+ADDITIONAL_LIBS+=$(UTOPIA_FE_LIBRARIES)
+
+
+
