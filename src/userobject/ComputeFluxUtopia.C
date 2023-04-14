@@ -588,31 +588,31 @@ void ComputeFluxUtopia::solve()
 
   cs->initialize("PSEUDO_L2_PROJECTION");
 
-  // assert(!cs->has_operator());
+  assert(!cs->has_operator());
 
-  // auto &matrices = cs->matrices();
-  // assert(matrices.size() == 2);
+  auto &matrices = cs->matrices();
+  assert(matrices.size() == 2);
 
-  // auto _T_ptr = matrices[0];
+  auto _T_ptr = matrices[0];
 
-  // utopia::USparseMatrix A_M0, A_F0;
+  utopia::USparseMatrix A_M0, A_F0;
 
-  // utopia::UVector rhs_M0, rhs_F0, sol_M;
+  utopia::UVector rhs_M0, rhs_F0, sol_M;
 
-  // //NonlinearSystemBase & _nl_from = _fe_problem.getNonlinearSystemBase();
+  //NonlinearSystemBase & _nl_from = _fe_problem.getNonlinearSystemBase();
     
-  // //utopia::convert(const_cast<NumericVector<libMesh::Number> &>(_nl_from.RHS()), rhs_m);
+  //utopia::convert(const_cast<NumericVector<libMesh::Number> &>(_nl_from.RHS()), rhs_m);
 
-  // convert_vec(fM0, rhs_M0);
-  // convert_mat(AM0, A_M0);
+  convert_vec(fM0, rhs_M0);
+  convert_mat(AM0, A_M0);
 
-  // convert_vec(fF0, rhs_F0);
-  // convert_mat(AF0, A_F0);
+  convert_vec(fF0, rhs_F0);
+  convert_mat(AF0, A_F0);
 
-  // convert_vec(*solM, sol_M);
+  convert_vec(*solM, sol_M);
 
-  // auto _T_t   = utopia::transpose(*_T_ptr);
-  // auto flux_0 = (A_M0 + _T_t * A_F0 * (*_T_ptr)) * sol_M - rhs_M0 - _T_t * rhs_F0;
+  auto _T_t   = utopia::transpose(*_T_ptr);
+  auto flux_0 = (A_M0 + _T_t * A_F0 * (*_T_ptr)) * sol_M - rhs_M0 - _T_t * rhs_F0;
 
 }
 
