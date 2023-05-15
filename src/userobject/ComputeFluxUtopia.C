@@ -19,6 +19,7 @@
 #include "libmesh/exodusII_io.h"
 #include "libmesh/nemesis_io.h"
 #include "helpers.h"
+#include "utopia.hpp"
 
 #include "utopia_MeshTransferOperator.hpp"
 
@@ -107,6 +108,9 @@ _multiapp_name(getParam<MultiAppName>("multi_app"))
   _mat_domain_name_M0   ="matrix_domain_M0";
   _mat_domain_name_M1   ="matrix_domain_M1";
   _mat_domain_name_M2   ="matrix_domain_M2";
+  _mat_boundary_name_M0 ="matrix_boundary_M0";
+  _mat_boundary_name_M1 ="matrix_boundary_M1";
+  _mat_boundary_name_M2 ="matrix_boundary_M2";
   _vec_flux_name_M0     ="vector_flux_M0";
   _vec_flux_name_M1     ="vector_flux_M1";
   _vec_flux_name_M2     ="vector_flux_M2";
@@ -125,6 +129,9 @@ _multiapp_name(getParam<MultiAppName>("multi_app"))
   _mat_domain_name_F0   ="matrix_domain_F0";
   _mat_domain_name_F1   ="matrix_domain_F1";
   _mat_domain_name_F2   ="matrix_domain_F2";
+  _mat_boundary_name_F0  ="matrix_domain_F0";
+  _mat_boundary_name_F1  ="matrix_domain_F1";
+  _mat_boundary_name_F2   ="matrix_domain_F2";
   _vec_flux_name_F0     ="vector_flux_F0";
   _vec_flux_name_F1     ="vector_flux_F1";
   _vec_flux_name_F2     ="vector_flux_F2";
@@ -187,6 +194,9 @@ void ComputeFluxUtopia::init()
   _linearImplicitSystemM[0].add_matrix(_mat_domain_name_M0.c_str());
   _linearImplicitSystemM[0].add_matrix(_mat_domain_name_M1.c_str());
   _linearImplicitSystemM[0].add_matrix(_mat_domain_name_M2.c_str());
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_M0.c_str());
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_M1.c_str());
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_M2.c_str());
 
   _linearImplicitSystemM[0].add_vector(_vec_flux_name_M0.c_str());
   _linearImplicitSystemM[0].add_vector(_vec_flux_name_M1.c_str());
@@ -214,6 +224,10 @@ void ComputeFluxUtopia::init()
   _linearImplicitSystemF[0].add_matrix(_mat_domain_name_F0.c_str());
   _linearImplicitSystemF[0].add_matrix(_mat_domain_name_F1.c_str());
   _linearImplicitSystemF[0].add_matrix(_mat_domain_name_F2.c_str());
+
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_F0.c_str());
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_F1.c_str());
+  _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_F2.c_str());
 
   _linearImplicitSystemF[0].add_vector(_vec_flux_name_F0.c_str());
   _linearImplicitSystemF[0].add_vector(_vec_flux_name_F1.c_str());
@@ -353,6 +367,10 @@ void ComputeFluxUtopia::solve()
   SparseMatrix<Number> & AM1 = _linearImplicitSystemM[0].get_matrix(_mat_domain_name_M1.c_str());
   SparseMatrix<Number> & AM2 = _linearImplicitSystemM[0].get_matrix(_mat_domain_name_M2.c_str());
 
+  SparseMatrix<Number> & BM0 = _linearImplicitSystemM[0].get_matrix(_mat_boundary_name_M0.c_str());
+  SparseMatrix<Number> & BM1 = _linearImplicitSystemM[0].get_matrix(_mat_boundary_name_M1.c_str());
+  SparseMatrix<Number> & BM2 = _linearImplicitSystemM[0].get_matrix(_mat_boundary_name_M2.c_str());
+
   NumericVector<Number> & fM0 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M0.c_str());
   NumericVector<Number> & fM1 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M1.c_str());
   NumericVector<Number> & fM2 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M2.c_str());
@@ -471,6 +489,10 @@ void ComputeFluxUtopia::solve()
   SparseMatrix<Number> & AF0 = _linearImplicitSystemF[0].get_matrix(_mat_domain_name_F0.c_str());
   SparseMatrix<Number> & AF1 = _linearImplicitSystemF[0].get_matrix(_mat_domain_name_F1.c_str());
   SparseMatrix<Number> & AF2 = _linearImplicitSystemF[0].get_matrix(_mat_domain_name_F2.c_str());
+
+  SparseMatrix<Number> & BF0 = _linearImplicitSystemF[0].get_matrix(_mat_boundary_name_F0.c_str());
+  SparseMatrix<Number> & BF1 = _linearImplicitSystemF[0].get_matrix(_mat_boundary_name_F1.c_str());
+  SparseMatrix<Number> & BF2 = _linearImplicitSystemF[0].get_matrix(_mat_boundary_name_F2.c_str());
 
   NumericVector<Number> & fF0 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F0.c_str());
   NumericVector<Number> & fF1 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F1.c_str());
@@ -595,9 +617,9 @@ void ComputeFluxUtopia::solve()
 
   auto _T_ptr = matrices[0];
 
-  utopia::USparseMatrix A_M0, A_F0;
+  utopia::USparseMatrix A_M0, A_F0, A_M1, A_F1, B_M0, B_M1, B_F0, B_F1;
 
-  utopia::UVector rhs_M0, rhs_F0, sol_M;
+  utopia::UVector rhs_M0, rhs_M1, rhs_F0, rhs_F1, sol_M, m_m0, m_m1, m_f0, m_f1, flux_rhs0, flux_rhs1, M0_L, M1_L;
 
   //NonlinearSystemBase & _nl_from = _fe_problem.getNonlinearSystemBase();
     
@@ -605,15 +627,109 @@ void ComputeFluxUtopia::solve()
 
   convert_vec(fM0, rhs_M0);
   convert_mat(AM0, A_M0);
+  convert_mat(BM0, B_M0);
 
   convert_vec(fF0, rhs_F0);
   convert_mat(AF0, A_F0);
+  convert_mat(BF0, B_F0);
+
+  convert_vec(fM1, rhs_M1);
+  convert_mat(AM1, A_M1);
+  convert_mat(BM1, B_M1);
+
+  convert_vec(fF1, rhs_F1);
+  convert_mat(AF1, A_F1);
+  convert_mat(BF1, B_F1);
+
+
+  convert_vec(iF0, m_f0);
+  convert_vec(iF1, m_f1);
+
+  convert_vec(iM0, m_m0);
+  convert_vec(iM1, m_m1);
 
   convert_vec(*solM, sol_M);
 
-  auto _T_t   = utopia::transpose(*_T_ptr);
-  auto flux_0 = (A_M0 + _T_t * A_F0 * (*_T_ptr)) * sol_M - rhs_M0 - _T_t * rhs_F0;
+  utopia::USparseMatrix _T_t   = utopia::transpose(*_T_ptr);
 
+  flux_rhs0 = (A_M0 + _T_t * A_F0 * (*_T_ptr)) * sol_M - rhs_M0 - _T_t * rhs_F0;
+
+  flux_rhs1 = (A_M1 + _T_t * A_F1 * (*_T_ptr)) * sol_M - rhs_M1 - _T_t * rhs_F1;
+
+  utopia::USparseMatrix mass_0 =  B_M0 + utopia::transpose(B_F0) * (*_T_ptr) * B_F0;
+
+  utopia::USparseMatrix mass_1 =  B_M0 + utopia::transpose(B_F0) * (*_T_ptr) * B_F0;
+
+  //M0_L = m_m0 + utopia::transpose(m_f0) * temp; 
+
+
+  // M1_L = m_m1 + utopia::transpose(m_f1) * (*_T_ptr) * m_f1; 
+
+  //utopia::UVector M0_inv = utopia::inv(M0_L);
+
+  //utopia::UVector M1_inv = utopia::inv(M1_L);
+
+  utopia::UVector flux_0 = utopia::inv(mass_0) * flux_rhs0;
+
+  utopia::UVector flux_1 = utopia::inv(mass_1) * flux_rhs1;
+
+  if(_has_variable_name_1 && _has_variable_name_2)
+
+      {
+        //copyVariableFl(_equationSystemsM, _var_name, _equationSystemsM, _variable_name);
+
+        NumericVector<Number> & b0 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M0.c_str());
+        NumericVector<Number> & b1 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M1.c_str());
+
+        MooseVariableFEBase  & _flux_var_1 = _fe_problem.getVariable(0, _variable_name_1, Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+        MooseVariableFEBase  & _flux_var_2 = _fe_problem.getVariable(0, _variable_name_2, Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+        MooseVariableFEBase  & sol_var = _fe_problem.getVariable(0, "pressure_M", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+
+        // solution of the original system
+        
+        System & main_sys = sol_var.sys().system();
+        System & aux_sys = _flux_var_1.sys().system();
+        NumericVector<Number> * aux_solution = aux_sys.solution.get();
+
+        const PetscInt * cols, one = 1;
+        utopia::Read<utopia::UVector> w0_d(flux_0);
+
+        utopia::Read<utopia::UVector> w1_d(flux_0);
+
+        {
+
+          for (const auto & node : _fe_problem.es().get_mesh().local_node_ptr_range())
+          {
+
+            for (unsigned int comp = 0; comp < node->n_comp(main_sys.number(), sol_var.number()); comp++)
+              
+              {
+                
+                const dof_id_type proj_index = node->dof_number(main_sys.number(), sol_var.number(), comp);
+
+                //const dof_id_type to_index = node->dof_number(main_sys.number(), main_var.number(), comp);
+
+                const dof_id_type to_index_1 = node->dof_number(aux_sys.number(), _flux_var_1.number(), comp);
+
+                const dof_id_type to_index_2 = node->dof_number(aux_sys.number(), _flux_var_2.number(), comp);
+
+                //main_solution->set(to_index, sol(proj_index));
+                  aux_solution->set(to_index_1, flux_0.get(proj_index));
+                  aux_solution->set(to_index_2, flux_1.get(proj_index));
+                }
+              }
+            }
+    
+            //main_solution->close();
+            aux_solution->close();
+            //main_sys.update();
+            aux_sys.update();
+
+            // _console << "END CopyFlux"  << std::endl;
+          }
+      //del();
+
+      std::cout<<"END initialize\n";
 }
 
 void ComputeFluxUtopia::write()
@@ -650,60 +766,7 @@ void ComputeFluxUtopia::initialize()
       write();
       
       //_equationSystemsM.reinit();
-      
-      if(_has_variable_name_1 && _has_variable_name_2)
-
-      {
-        //copyVariableFl(_equationSystemsM, _var_name, _equationSystemsM, _variable_name);
-
-        NumericVector<Number> & b0 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M0.c_str());
-        NumericVector<Number> & b1 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M1.c_str());
-
-        MooseVariableFEBase  & _flux_var_1 = _fe_problem.getVariable(0, _variable_name_1, Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
-        MooseVariableFEBase  & _flux_var_2 = _fe_problem.getVariable(0, _variable_name_2, Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
-        MooseVariableFEBase  & sol_var = _fe_problem.getVariable(0, "pressure_M", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
-
-        // solution of the original system
-        
-        System & main_sys = sol_var.sys().system();
-        System & aux_sys = _flux_var_1.sys().system();
-        NumericVector<Number> * aux_solution = aux_sys.solution.get();
-
-        {
-
-          for (const auto & node : _fe_problem.es().get_mesh().local_node_ptr_range())
-          {
-
-            for (unsigned int comp = 0; comp < node->n_comp(main_sys.number(), sol_var.number()); comp++)
-              
-              {
-                
-                const dof_id_type proj_index = node->dof_number(main_sys.number(), sol_var.number(), comp);
-
-                //const dof_id_type to_index = node->dof_number(main_sys.number(), main_var.number(), comp);
-
-                const dof_id_type to_index_1 = node->dof_number(aux_sys.number(), _flux_var_1.number(), comp);
-
-                const dof_id_type to_index_2 = node->dof_number(aux_sys.number(), _flux_var_2.number(), comp);
-
-                //main_solution->set(to_index, sol(proj_index));
-
-                aux_solution->set(to_index_1, b0(proj_index));
-                aux_solution->set(to_index_2, b1(proj_index));
-                }
-              }
-            }
-    
-            //main_solution->close();
-            aux_solution->close();
-            //main_sys.update();
-            aux_sys.update();
-
-            // _console << "END CopyFlux"  << std::endl;
-          }
-      //del();
-
-      std::cout<<"END initialize\n";
+     
 }
 
 void ComputeFluxUtopia::assembleMatrix()
@@ -713,6 +776,10 @@ void ComputeFluxUtopia::assembleMatrix()
   SparseMatrix <Number> & AM0=_linearImplicitSystemM[0].get_matrix( _mat_domain_name_M0.c_str() );
   SparseMatrix <Number> & AM1=_linearImplicitSystemM[0].get_matrix( _mat_domain_name_M1.c_str() );
   SparseMatrix <Number> & AM2=_linearImplicitSystemM[0].get_matrix( _mat_domain_name_M2.c_str() );
+
+  SparseMatrix <Number> & BM0=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_M0.c_str() );
+  SparseMatrix <Number> & BM1=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_M1.c_str() );
+  SparseMatrix <Number> & BM2=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_M2.c_str() );
 
   NumericVector<Number> & bM0=_linearImplicitSystemM[0].get_vector( _vec_rhs_name_M0.c_str() );
   NumericVector<Number> & bM1=_linearImplicitSystemM[0].get_vector( _vec_rhs_name_M1.c_str() );
@@ -970,18 +1037,25 @@ void ComputeFluxUtopia::assembleMatrix()
   {
     if (iM0(i)>1e-10)
     {
-      iM0.set( i,1./iM0(i) );
+      BM0.set(i,i, iM0(i));
+      iM0.set(i,1/iM0(i) );
+     
     }
     if (iM1(i)>1e-10)
     {
-      iM1.set(i,1./iM1(i));
+      BM1.set(i,i, iM1(i));
+      iM1.set(i,1/iM1(i));
     }
     if (iM2(i)>1e-10)
     {
-      iM2.set(i,1./iM2(i));
+      BM2.set(i,i, iM1(i));
+      iM2.set(i, 1/iM2(i));
     }
 
   }
+  BM0.close();
+  BM1.close();
+  BM2.close();
 
   iM0.close();
   iM1.close();
@@ -999,6 +1073,10 @@ void ComputeFluxUtopia::assembleFracture()
   SparseMatrix <Number> & AF0=_linearImplicitSystemF[0].get_matrix( _mat_domain_name_F0.c_str() );
   SparseMatrix <Number> & AF1=_linearImplicitSystemF[0].get_matrix( _mat_domain_name_F1.c_str() );
   SparseMatrix <Number> & AF2=_linearImplicitSystemF[0].get_matrix( _mat_domain_name_F2.c_str() );
+
+  SparseMatrix <Number> & BF0=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_F0.c_str() );
+  SparseMatrix <Number> & BF1=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_F1.c_str() );
+  SparseMatrix <Number> & BF2=_linearImplicitSystemM[0].get_matrix( _mat_boundary_name_F2.c_str() );
 
   NumericVector<Number> & bF0=_linearImplicitSystemF[0].get_vector( _vec_rhs_name_F0.c_str() );
   NumericVector<Number> & bF1=_linearImplicitSystemF[0].get_vector( _vec_rhs_name_F1.c_str() );
@@ -1280,22 +1358,32 @@ void ComputeFluxUtopia::assembleFracture()
   {
     if (iF0(i)>1e-10)
     {
+      BF0.set(i, i, iF0(i));
       iF0.set( i,1./iF0(i) );
+
     }
     if (iF1(i)>1e-10)
     {
+      BF0.set(i, i, iF1(i));
       iF1.set(i,1./iF1(i));
     }
     if (iF2(i)>1e-10)
     {
+      BF2.set(i, i, iF2(i));
       iF2.set(i,1./iF2(i));
     }
 
   }
 
+  BF0.close();
+  BF1.close();
+  BF2.close();
+
   iF0.close();
   iF1.close();
   iF2.close();
+
+
 
   std::cout << "ComputeFluxUtopia::assemble Fracture stop\n";
 }

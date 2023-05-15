@@ -23,6 +23,9 @@
 #include "FlowAndTransport.h"
 #include "ParrotSolver.h"
 
+#include "utopia_Input.hpp"
+#include "utopia_Options.hpp"
+
 class ComputeFluxUtopia;
 
 template <>
@@ -58,6 +61,9 @@ public:
   std::string  _mat_domain_name_M0;
   std::string  _mat_domain_name_M1;
   std::string  _mat_domain_name_M2;
+  std::string  _mat_boundary_name_M0;
+  std::string  _mat_boundary_name_M1;
+  std::string  _mat_boundary_name_M2;
   std::string  _vec_flux_name_M0;
   std::string  _vec_flux_name_M1;
   std::string  _vec_flux_name_M2;
@@ -75,6 +81,9 @@ public:
   std::string  _mat_domain_name_F0;
   std::string  _mat_domain_name_F1;
   std::string  _mat_domain_name_F2;
+  std::string  _mat_boundary_name_F0;
+  std::string  _mat_boundary_name_F1;
+  std::string  _mat_boundary_name_F2;
   std::string  _vec_flux_name_F0;
   std::string  _vec_flux_name_F1;
   std::string  _vec_flux_name_F2;
