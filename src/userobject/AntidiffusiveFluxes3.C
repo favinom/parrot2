@@ -1,724 +1,724 @@
-// /****************************************************************/
-// /*               DO NOT MODIFY THIS HEADER                      */
-// /* MOOSE - Multiphysics Object Oriented Simulation Environment  */
-// /*                                                              */
-// /*           (c) 2010 Battelle Energy Alliance, LLC             */
-// /*                   ALL RIGHTS RESERVED                        */
-// /*                                                              */
-// /*          Prepared by Battelle Energy Alliance, LLC           */
-// /*            Under Contract No. DE-AC07-05ID14517              */
-// /*            With the U. S. Department of Energy               */
-// /*                                                              */
-// /*            See COPYRIGHT for full restrictions               */
-// /****************************************************************/
+/****************************************************************/
+/*               DO NOT MODIFY THIS HEADER                      */
+/* MOOSE - Multiphysics Object Oriented Simulation Environment  */
+/*                                                              */
+/*           (c) 2010 Battelle Energy Alliance, LLC             */
+/*                   ALL RIGHTS RESERVED                        */
+/*                                                              */
+/*          Prepared by Battelle Energy Alliance, LLC           */
+/*            Under Contract No. DE-AC07-05ID14517              */
+/*            With the U. S. Department of Energy               */
+/*                                                              */
+/*            See COPYRIGHT for full restrictions               */
+/****************************************************************/
 
-// /****************************************************************/
-// /*               DO NOT MODIFY THIS HEADER                      */
-// /*    Immersed_Boundary- ICS Mechanical simulation framework    */
-// /*                Prepared by Maria Nestola,                    */
-// /*                  ICS, USI, 6900 Lugano                       */
-// /*                                                              */
-// /****************************************************************/
-
-
-// #include "AntidiffusiveFluxes3.h"
-
-// #include <algorithm>
-
-// #include "NonlinearSystemBase.h"
-// #include "Transient.h"
+/****************************************************************/
+/*               DO NOT MODIFY THIS HEADER                      */
+/*    Immersed_Boundary- ICS Mechanical simulation framework    */
+/*                Prepared by Maria Nestola,                    */
+/*                  ICS, USI, 6900 Lugano                       */
+/*                                                              */
+/****************************************************************/
 
 
+#include "AntidiffusiveFluxes3.h"
+
+#include <algorithm>
+
+#include "NonlinearSystemBase.h"
+#include "Transient.h"
 
 
-// registerMooseObject("parrot2App",AntidiffusiveFluxes3);
 
-// template <>
-// InputParameters
-// validParams<AntidiffusiveFluxes3>()
-// {
+
+registerMooseObject("parrot2App",AntidiffusiveFluxes3);
+
+template <>
+InputParameters
+validParams<AntidiffusiveFluxes3>()
+{
     
-//     InputParameters params = validParams<GeneralUserObject>();
-//     params.addParam<std::string>("dc_boundaries", "-1", "Dirichlet Boundary ID");
-//     params.addParam<std::string>("dc_variables" , "-1", "Variable to which given BC_id applies");
-//     params.addRequiredParam<UserObjectName>("operator_userobject","The userobject that stores our operators");
-//     params.addRequiredParam<bool>("WriteCorrection","boolean to write correction");
+    InputParameters params = validParams<GeneralUserObject>();
+    params.addParam<std::string>("dc_boundaries", "-1", "Dirichlet Boundary ID");
+    params.addParam<std::string>("dc_variables" , "-1", "Variable to which given BC_id applies");
+    params.addRequiredParam<UserObjectName>("operator_userobject","The userobject that stores our operators");
+    params.addRequiredParam<bool>("WriteCorrection","boolean to write correction");
     
-//     return params;
+    return params;
     
-// }
+}
 
 
 
-// AntidiffusiveFluxes3::AntidiffusiveFluxes3(const InputParameters & parameters):
-// GeneralUserObject(parameters),
-// _pp_comm(_fe_problem.es().get_mesh().comm()),
-// _dc_var(getParam<std::string>("dc_variables")),
-// _userObjectName(getParam<UserObjectName>("operator_userobject")),
-// _write_correction(getParam<bool>("WriteCorrection"))
-// {
+AntidiffusiveFluxes3::AntidiffusiveFluxes3(const InputParameters & parameters):
+GeneralUserObject(parameters),
+_pp_comm(_fe_problem.es().get_mesh().comm()),
+_dc_var(getParam<std::string>("dc_variables")),
+_userObjectName(getParam<UserObjectName>("operator_userobject")),
+_write_correction(getParam<bool>("WriteCorrection"))
+{
     
-//     std::vector<std::string> tmp = split_string(parameters.get<std::string>("dc_boundaries"), ' ');
-//     for(auto str_tmp=tmp.begin(); str_tmp != tmp.end(); str_tmp++)
-//     {
-//         _dc_boundary_id.push_back(atoi(str_tmp->c_str()));
-//     }
-    
-    
-    
-// }
-
-
-
-// void
-// AntidiffusiveFluxes3::initialize()
-// {}
-
-// void
-// AntidiffusiveFluxes3::execute()
-// {
-//     std::cout<<"AntidiffusiveFluxes3::execute()"<<std::endl;
-//     stabilize_coeffiecient();
-// }
-
-
-// void
-// AntidiffusiveFluxes3::finalize()
-// {}
-
-// void
-// AntidiffusiveFluxes3::stabilize_coeffiecient()
-// {
-//     auto &_sys = _fe_problem.es().get_system<TransientNonlinearImplicitSystem>("nl0");
-//     NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
-//     const DofMap & dof_map = _nl.dofMap();
-//     PetscMatrix<Number> *petsc_mat = dynamic_cast<libMesh::PetscMatrix<Number>* >(_sys.matrix);
+    std::vector<std::string> tmp = split_string(parameters.get<std::string>("dc_boundaries"), ' ');
+    for(auto str_tmp=tmp.begin(); str_tmp != tmp.end(); str_tmp++)
+    {
+        _dc_boundary_id.push_back(atoi(str_tmp->c_str()));
+    }
     
     
-//     StoreOperators & storeOperatorsUO=_fe_problem.getUserObject<StoreOperators>(_userObjectName);
     
-//     auto _M  = storeOperatorsUO.MassMatrix();
-//     auto _L  = storeOperatorsUO.LumpMassMatrix();
-//     auto _J  = storeOperatorsUO.JacMatrix();
-//     auto _PL = storeOperatorsUO.PoroLumpMassMatrix();
-//     auto _PM = storeOperatorsUO.PoroMassMatrix();
-//     auto _D  = storeOperatorsUO.StabMatrix();
-//     auto _hv = storeOperatorsUO.HangVec();
+}
+
+
+
+void
+AntidiffusiveFluxes3::initialize()
+{}
+
+void
+AntidiffusiveFluxes3::execute()
+{
+    std::cout<<"AntidiffusiveFluxes3::execute()"<<std::endl;
+    stabilize_coeffiecient();
+}
+
+
+void
+AntidiffusiveFluxes3::finalize()
+{}
+
+void
+AntidiffusiveFluxes3::stabilize_coeffiecient()
+{
+    auto &_sys = _fe_problem.es().get_system<TransientNonlinearImplicitSystem>("nl0");
+    NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
+    const DofMap & dof_map = _nl.dofMap();
+    PetscMatrix<Number> *petsc_mat = dynamic_cast<libMesh::PetscMatrix<Number>* >(_sys.matrix);
     
     
-//     if(_fe_problem.timeStep()==1)
-//     {
+    StoreOperators & storeOperatorsUO=_fe_problem.getUserObject<StoreOperators>(_userObjectName);
+    
+    auto _M  = storeOperatorsUO.MassMatrix();
+    auto _L  = storeOperatorsUO.LumpMassMatrix();
+    auto _J  = storeOperatorsUO.JacMatrix();
+    auto _PL = storeOperatorsUO.PoroLumpMassMatrix();
+    auto _PM = storeOperatorsUO.PoroMassMatrix();
+    auto _D  = storeOperatorsUO.StabMatrix();
+    auto _hv = storeOperatorsUO.HangVec();
+    
+    
+    if(_fe_problem.timeStep()==1)
+    {
         
-//         AntidiffusiveFluxes3::determine_dc_bnd_var_id(AntidiffusiveFluxes3::split_string(_dc_var, ' '));
-//         find_boundary(zero_rows_fluxes, _dc_boundary_id);
-//     }
+        AntidiffusiveFluxes3::determine_dc_bnd_var_id(AntidiffusiveFluxes3::split_string(_dc_var, ' '));
+        find_boundary(zero_rows_fluxes, _dc_boundary_id);
+    }
     
     
     
-//     std::vector<double>_vec_localize;
-//     std::vector<double>_vec_localize_dot;
+    std::vector<double>_vec_localize;
+    std::vector<double>_vec_localize_dot;
     
-//     PetscVector<Number> _inv(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _inv.zero();
+    PetscVector<Number> _inv(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _inv.zero();
     
-//     PetscVector<Number> _inv_p(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _inv_p.zero();
+    PetscVector<Number> _inv_p(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _inv_p.zero();
     
-//     PetscVector<Number> _u_dot(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _u_dot.zero();
+    PetscVector<Number> _u_dot(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _u_dot.zero();
     
-//     PetscVector<Number> _tmp(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _tmp.zero();
+    PetscVector<Number> _tmp(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _tmp.zero();
     
-//     PetscVector<Number> _tmp_dot(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _tmp_dot.zero();
+    PetscVector<Number> _tmp_dot(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _tmp_dot.zero();
     
-//     PetscVector<Number> _sol_fluxes(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _sol_fluxes.zero();
+    PetscVector<Number> _sol_fluxes(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _sol_fluxes.zero();
     
-//     PetscMatrix<Number> _I_tr(_pp_comm);
+    PetscMatrix<Number> _I_tr(_pp_comm);
     
-//     TransientNonlinearImplicitSystem & _nl_libMesh= _fe_problem.es().get_system<TransientNonlinearImplicitSystem>("nl0");
+    TransientNonlinearImplicitSystem & _nl_libMesh= _fe_problem.es().get_system<TransientNonlinearImplicitSystem>("nl0");
     
-//     std::unique_ptr<NumericVector<Number>> & solutionPointer(_nl_libMesh.solution);
+    std::unique_ptr<NumericVector<Number>> & solutionPointer(_nl_libMesh.solution);
     
-//     NumericVector<Number> * _sol_vec_fluxes = solutionPointer.get();
+    NumericVector<Number> * _sol_vec_fluxes = solutionPointer.get();
     
-//     //_sol_vec_fluxes->print_matlab("_sol_vec_fluxes.m");
+    //_sol_vec_fluxes->print_matlab("_sol_vec_fluxes.m");
     
-//     _tmp.pointwise_mult(*_sol_vec_fluxes,*_hv);
+    _tmp.pointwise_mult(*_sol_vec_fluxes,*_hv);
     
-//     auto _I = storeOperatorsUO.H_Interpolator();
+    auto _I = storeOperatorsUO.H_Interpolator();
     
-//     _I->get_transpose(_I_tr);
+    _I->get_transpose(_I_tr);
     
-//     _sol_fluxes.add(_tmp);
+    _sol_fluxes.add(_tmp);
     
-//     _sol_fluxes.localize(_vec_localize);
+    _sol_fluxes.localize(_vec_localize);
     
-//     _J->vector_mult(_tmp_dot, _sol_fluxes);
+    _J->vector_mult(_tmp_dot, _sol_fluxes);
     
-//     _L->get_diagonal(_inv);
+    _L->get_diagonal(_inv);
     
-//     _inv.reciprocal();
+    _inv.reciprocal();
     
-//     _PL->get_diagonal(_inv_p);
+    _PL->get_diagonal(_inv_p);
     
-//     _inv_p.reciprocal();
+    _inv_p.reciprocal();
     
-//     _u_dot.pointwise_mult(_inv_p,_tmp_dot);
+    _u_dot.pointwise_mult(_inv_p,_tmp_dot);
     
-//     _u_dot.localize(_vec_localize_dot);
-    
-    
-//     int r_start = _M->row_start();
-//     int r_stop  = _M->row_stop();
+    _u_dot.localize(_vec_localize_dot);
     
     
-//     Mat M_petsc    = _M->mat();
-//     Mat D_petsc    = _D->mat();
+    int r_start = _M->row_start();
+    int r_stop  = _M->row_stop();
     
     
-//     PetscVector<Number> _R_p(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _R_p.zero();
-    
-//     PetscVector<Number> _R_m(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _R_m.zero();
-    
-//     PetscVector<Number> _a_bar(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _a_bar.zero();
-    
-//     PetscVector<Number> _m_i(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _m_i.zero();
-    
-//     PetscVector<Number> _ones(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _ones.zero();
+    Mat M_petsc    = _M->mat();
+    Mat D_petsc    = _D->mat();
     
     
-//     _ones.add(1.0);
+    PetscVector<Number> _R_p(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _R_p.zero();
     
-//     PetscMatrix<Number> _f_mat(_pp_comm);
-//     _f_mat.attach_dof_map(dof_map);
-//     _f_mat.init();
+    PetscVector<Number> _R_m(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _R_m.zero();
     
-//     PetscMatrix<Number> _alpha_mat(_pp_comm);
-//     _alpha_mat.attach_dof_map(dof_map);
-//     _alpha_mat.init();
+    PetscVector<Number> _a_bar(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _a_bar.zero();
     
-//     {
-//         std::vector<Real> v1;
-//         std::vector<int> c1;
-//         int rb=petsc_mat->row_start();
-//         int re=petsc_mat->row_stop();
-//         int rb1=_f_mat.row_start();
-//         int re2=_alpha_mat.row_stop();
+    PetscVector<Number> _m_i(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _m_i.zero();
+    
+    PetscVector<Number> _ones(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _ones.zero();
+    
+    
+    _ones.add(1.0);
+    
+    PetscMatrix<Number> _f_mat(_pp_comm);
+    _f_mat.attach_dof_map(dof_map);
+    _f_mat.init();
+    
+    PetscMatrix<Number> _alpha_mat(_pp_comm);
+    _alpha_mat.attach_dof_map(dof_map);
+    _alpha_mat.init();
+    
+    {
+        std::vector<Real> v1;
+        std::vector<int> c1;
+        int rb=petsc_mat->row_start();
+        int re=petsc_mat->row_stop();
+        int rb1=_f_mat.row_start();
+        int re2=_alpha_mat.row_stop();
         
-//         if (rb!=rb1)
-//         {
-//             std::cout<<"rb\n";
-//             exit(1);
-//         }
-//         if (re!=re2)
-//         {
-//             std::cout<<"re\n";
-//             exit(1);
-//         }
-//         if (rb!=rb1)
-//         {
-//             std::cout<<"rb\n";
-//             exit(1);
-//         }
-//         if (re!=re2)
-//         {
-//             std::cout<<"re\n";
-//             exit(1);
-//         }
-//         for (int row=rb; row<re; ++row)
-//         {
-//             getRow3(*petsc_mat,row,v1,c1);
-//             for (int ii=0; ii<v1.size(); ++ii)
-//             {
-//                 int col=c1.at(ii);
-//                 _f_mat.set(row,col,0.0);
-//                 _alpha_mat.set(row,col,0.0);
-//             }
-//         }
-//     }
+        if (rb!=rb1)
+        {
+            std::cout<<"rb\n";
+            exit(1);
+        }
+        if (re!=re2)
+        {
+            std::cout<<"re\n";
+            exit(1);
+        }
+        if (rb!=rb1)
+        {
+            std::cout<<"rb\n";
+            exit(1);
+        }
+        if (re!=re2)
+        {
+            std::cout<<"re\n";
+            exit(1);
+        }
+        for (int row=rb; row<re; ++row)
+        {
+            getRow3(*petsc_mat,row,v1,c1);
+            for (int ii=0; ii<v1.size(); ++ii)
+            {
+                int col=c1.at(ii);
+                _f_mat.set(row,col,0.0);
+                _alpha_mat.set(row,col,0.0);
+            }
+        }
+    }
     
     
-//     _f_mat.close();
-//     _alpha_mat.close();
+    _f_mat.close();
+    _alpha_mat.close();
     
-//     std::unique_ptr<NumericVector<Number>> f = _sol_vec_fluxes->zero_clone();
+    std::unique_ptr<NumericVector<Number>> f = _sol_vec_fluxes->zero_clone();
     
     
-//     _PL->vector_mult(_m_i,_ones);
+    _PL->vector_mult(_m_i,_ones);
     
-//     Real dt = static_cast<Transient*>(_fe_problem.getMooseApp().getExecutioner())->getDT();
+    Real dt = static_cast<Transient*>(_fe_problem.getMooseApp().getExecutioner())->getDT();
     
-//     for (int row=r_start; row<r_stop; ++row)
-//     {
-//         PetscInt ncols_m, ncols_d; //, ncols_l;
+    for (int row=r_start; row<r_stop; ++row)
+    {
+        PetscInt ncols_m, ncols_d; //, ncols_l;
         
-//         PetscInt const *cols_m;
-//         PetscInt const *cols_d;
+        PetscInt const *cols_m;
+        PetscInt const *cols_d;
         
-//         PetscScalar const *val_m;
-//         PetscScalar const *val_d;
-        
-        
-//         Real _P_p=0.0;
-//         Real _Q_p=0.0;
-        
-//         Real _P_m=0.0;
-//         Real _Q_m=0.0;
-        
-//         Real f_ij = 0.0;
-        
-//         MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-//         MatGetRow(D_petsc,row,&ncols_d,&cols_d,&val_d);
+        PetscScalar const *val_m;
+        PetscScalar const *val_d;
         
         
+        Real _P_p=0.0;
+        Real _Q_p=0.0;
         
-//         for (int p=0; p<ncols_m; p++)
-//         {
-//             int col=cols_m[p];
+        Real _P_m=0.0;
+        Real _Q_m=0.0;
+        
+        Real f_ij = 0.0;
+        
+        MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        MatGetRow(D_petsc,row,&ncols_d,&cols_d,&val_d);
+        
+        
+        
+        for (int p=0; p<ncols_m; p++)
+        {
+            int col=cols_m[p];
             
-//             if (row!=col)
-//             {
+            if (row!=col)
+            {
                 
-//                 Real Dij  = val_d[p];
+                Real Dij  = val_d[p];
                 
-//                 Real PMij = val_m[p];
+                Real PMij = val_m[p];
                 
-//                 auto v_i = (_sol_fluxes)(row);
+                auto v_i = (_sol_fluxes)(row);
                 
-//                 auto v_d_i = _u_dot(row);
+                auto v_d_i = _u_dot(row);
                 
-//                 f_ij = PMij * (v_d_i - _vec_localize_dot.at(col)) - 1.0 * Dij * (v_i - _vec_localize.at(col));
+                f_ij = PMij * (v_d_i - _vec_localize_dot.at(col)) - 1.0 * Dij * (v_i - _vec_localize.at(col));
                 
-//                 double check = (_vec_localize.at(col) - v_i) * f_ij;
+                double check = (_vec_localize.at(col) - v_i) * f_ij;
                 
-//                 if(check > 0) _f_mat.set(row, col,0.0);
+                if(check > 0) _f_mat.set(row, col,0.0);
                 
-//                 else _f_mat.set(row, col, f_ij);
+                else _f_mat.set(row, col, f_ij);
                 
-//                 _P_p+=std::max(0.0,f_ij);
+                _P_p+=std::max(0.0,f_ij);
                 
-//                 _P_m+=std::min(0.0,f_ij);
+                _P_m+=std::min(0.0,f_ij);
                 
-//             }
+            }
             
-//         }
+        }
         
         
         
-//         MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
         
-//         MatRestoreRow(D_petsc,row,&ncols_d,&cols_d,&val_d);
+        MatRestoreRow(D_petsc,row,&ncols_d,&cols_d,&val_d);
         
-//         std::vector<Real> values;
-//         values.clear();
-        
-        
-//         MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-        
-//         for (int p=0; p<ncols_m; ++p){
-//             int col=cols_m[p];
-//             values.push_back(_vec_localize.at(col));
-//         }
-        
-//         MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-        
-//         double v_i = (_sol_fluxes)(row);
-        
-//         double m_i = _m_i(row);
-        
-//         _Q_p = m_i/dt * (*std::max_element(std::begin(values), end(values)) - v_i);
-        
-//         _Q_m = m_i/dt * (*std::min_element(std::begin(values), end(values)) - v_i);
+        std::vector<Real> values;
+        values.clear();
         
         
-//         Real value_p = 0.0;
+        MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
         
-//         if(std::abs(_P_p)>1e-18) value_p = _Q_p/_P_p;
+        for (int p=0; p<ncols_m; ++p){
+            int col=cols_m[p];
+            values.push_back(_vec_localize.at(col));
+        }
         
-//         Real value_m = 0.0;
+        MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
         
-//         if(std::abs(_P_m)>1e-18) value_m = _Q_m/_P_m;
+        double v_i = (_sol_fluxes)(row);
+        
+        double m_i = _m_i(row);
+        
+        _Q_p = m_i/dt * (*std::max_element(std::begin(values), end(values)) - v_i);
+        
+        _Q_m = m_i/dt * (*std::min_element(std::begin(values), end(values)) - v_i);
         
         
-//         Real entry_p = std::min(1.0,value_p);
-//         Real entry_m = std::min(1.0,value_m);
+        Real value_p = 0.0;
         
-//         auto it = std::find(zero_rows_fluxes.begin(), zero_rows_fluxes.end(), row);
+        if(std::abs(_P_p)>1e-18) value_p = _Q_p/_P_p;
         
-//         if(it == zero_rows_fluxes.end()){
+        Real value_m = 0.0;
+        
+        if(std::abs(_P_m)>1e-18) value_m = _Q_m/_P_m;
+        
+        
+        Real entry_p = std::min(1.0,value_p);
+        Real entry_m = std::min(1.0,value_m);
+        
+        auto it = std::find(zero_rows_fluxes.begin(), zero_rows_fluxes.end(), row);
+        
+        if(it == zero_rows_fluxes.end()){
             
-//             _R_p.set(row,entry_p);
-//             _R_m.set(row,entry_m);
-            
-            
-//         }
-//         else
-        
-//         {
-//             _R_p.set(row,1.0);
-//             _R_m.set(row,1.0);
-            
-//         }
-//     }
-    
-    
-//     _f_mat.close();
-//     _R_m.close();
-//     _R_p.close();
-    
-//     //_f_mat.print_matlab("f_d.m");
-    
-//     std::vector<double>_vec_localize_r_p;
-//     _R_p.localize(_vec_localize_r_p);
-    
-//     std::vector<double>_vec_localize_r_m;
-//     _R_m.localize(_vec_localize_r_m);
-    
-    
-//     for (int row=r_start; row<r_stop; ++row)
-//     {
-//         PetscInt ncols_m, ncols_f; //, ncols_l;
-        
-//         PetscInt const *cols_m, *cols_f; //, *cols_l;
-        
-//         PetscScalar const *val_m, *val_f; //, *val_l;
-        
-//         std::vector<double> values;
-        
-//         values.clear();
-        
-        
-//         MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-        
-//         for (int p=0; p<ncols_m; ++p){
-//             int col=cols_m[p];
-//             values.push_back(_vec_localize.at(col));
-//         }
-//         MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-        
-//         MatGetRow(_f_mat.mat(),row,&ncols_f,&cols_f,&val_f);
-        
-//         MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
-        
-        
-//         for (int p=0; p<ncols_m; ++p)
-//         {
-//             int col=cols_m[p];
+            _R_p.set(row,entry_p);
+            _R_m.set(row,entry_m);
             
             
+        }
+        else
+        
+        {
+            _R_p.set(row,1.0);
+            _R_m.set(row,1.0);
             
-//             if(row!=col) {
+        }
+    }
+    
+    
+    _f_mat.close();
+    _R_m.close();
+    _R_p.close();
+    
+    //_f_mat.print_matlab("f_d.m");
+    
+    std::vector<double>_vec_localize_r_p;
+    _R_p.localize(_vec_localize_r_p);
+    
+    std::vector<double>_vec_localize_r_m;
+    _R_m.localize(_vec_localize_r_m);
+    
+    
+    for (int row=r_start; row<r_stop; ++row)
+    {
+        PetscInt ncols_m, ncols_f; //, ncols_l;
+        
+        PetscInt const *cols_m, *cols_f; //, *cols_l;
+        
+        PetscScalar const *val_m, *val_f; //, *val_l;
+        
+        std::vector<double> values;
+        
+        values.clear();
+        
+        
+        MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        
+        for (int p=0; p<ncols_m; ++p){
+            int col=cols_m[p];
+            values.push_back(_vec_localize.at(col));
+        }
+        MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        
+        MatGetRow(_f_mat.mat(),row,&ncols_f,&cols_f,&val_f);
+        
+        MatGetRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        
+        
+        for (int p=0; p<ncols_m; ++p)
+        {
+            int col=cols_m[p];
+            
+            
+            
+            if(row!=col) {
                 
-//                 Real ris = 0.0;
+                Real ris = 0.0;
                 
-//                 if(val_f[p]>=0.0) {
+                if(val_f[p]>=0.0) {
                     
-//                     double entry_p = std::min(_R_p(row),_vec_localize_r_m.at(col));
-//                     ris = val_f[p] * entry_p;
-//                     _alpha_mat.set(row, col, ris);
-//                 }
+                    double entry_p = std::min(_R_p(row),_vec_localize_r_m.at(col));
+                    ris = val_f[p] * entry_p;
+                    _alpha_mat.set(row, col, ris);
+                }
                 
-//                 else
-//                 {
+                else
+                {
                     
-//                     double entry_m = std::min(_R_m(row),_vec_localize_r_p.at(col));
-//                     ris = val_f[p] * entry_m;
-//                     _alpha_mat.set(row, col, ris);
+                    double entry_m = std::min(_R_m(row),_vec_localize_r_p.at(col));
+                    ris = val_f[p] * entry_m;
+                    _alpha_mat.set(row, col, ris);
                     
-//                 }
+                }
                 
-//             }
+            }
             
-//         }
+        }
         
-//         MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
+        MatRestoreRow(M_petsc,row,&ncols_m,&cols_m,&val_m);
         
-//         MatRestoreRow(_f_mat.mat(),row,&ncols_f,&cols_f,&val_f);
+        MatRestoreRow(_f_mat.mat(),row,&ncols_f,&cols_f,&val_f);
         
         
-//     }
+    }
     
     
-//     _alpha_mat.close();
+    _alpha_mat.close();
     
-//     _alpha_mat.vector_mult(_a_bar,_ones);
+    _alpha_mat.vector_mult(_a_bar,_ones);
     
     
-//     for (int row=r_start; row<r_stop; ++row)
-//     {
+    for (int row=r_start; row<r_stop; ++row)
+    {
         
-//         auto it = std::find(zero_rows_fluxes.begin(), zero_rows_fluxes.end(), row);
+        auto it = std::find(zero_rows_fluxes.begin(), zero_rows_fluxes.end(), row);
         
-//         if(it == zero_rows_fluxes.end()){
+        if(it == zero_rows_fluxes.end()){
             
-//             auto f_bar = _a_bar(row) * dt;
+            auto f_bar = _a_bar(row) * dt;
             
-//             (*f).set(row,f_bar);
-//         }
-//         else{
+            (*f).set(row,f_bar);
+        }
+        else{
             
-//             (*f).set(row,0.0);
-//         }
+            (*f).set(row,0.0);
+        }
         
         
-//     }
+    }
     
     
-//     (*f).close();
+    (*f).close();
     
-//     _sol_fluxes.add(*f);
+    _sol_fluxes.add(*f);
     
-//     PetscVector<Number> _tmp_sol1(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _tmp_sol1.zero();
+    PetscVector<Number> _tmp_sol1(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _tmp_sol1.zero();
     
-//     PetscVector<Number> _tmp_sol2(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _tmp_sol2.zero();
+    PetscVector<Number> _tmp_sol2(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _tmp_sol2.zero();
     
-//     _tmp_sol1.pointwise_mult(_sol_fluxes,*_hv);
+    _tmp_sol1.pointwise_mult(_sol_fluxes,*_hv);
     
-//     _I->vector_mult(_tmp_sol2,_sol_fluxes);
+    _I->vector_mult(_tmp_sol2,_sol_fluxes);
     
-//     _tmp_sol2.add(_tmp_sol1);
+    _tmp_sol2.add(_tmp_sol1);
     
-//     std::unique_ptr<NumericVector<Number>> & solutionPointer2(_nl_libMesh.solution);
+    std::unique_ptr<NumericVector<Number>> & solutionPointer2(_nl_libMesh.solution);
     
-//     NumericVector<Number> * _sol_vec_fluxes2 = solutionPointer2.get();
+    NumericVector<Number> * _sol_vec_fluxes2 = solutionPointer2.get();
     
-//     //_sol_vec_fluxes2->zero();
+    //_sol_vec_fluxes2->zero();
     
-//     _sol_vec_fluxes2->add(*f);
+    _sol_vec_fluxes2->add(*f);
     
     
     
-//     PetscVector<Number> _f_I(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _f_I.zero();
+    PetscVector<Number> _f_I(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _f_I.zero();
     
-//     PetscVector<Number> _tmp_f(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
-//     _tmp_f.zero();
-//     _tmp_f.pointwise_mult(*_hv,*f);
+    PetscVector<Number> _tmp_f(_pp_comm, dof_map.n_dofs(), dof_map.n_local_dofs());
+    _tmp_f.zero();
+    _tmp_f.pointwise_mult(*_hv,*f);
     
-//     _I->vector_mult(_f_I,*f);
-//     _f_I.add(_tmp_f);
+    _I->vector_mult(_f_I,*f);
+    _f_I.add(_tmp_f);
     
-//     PetscVector<Number> &f_c= dynamic_cast<libMesh::PetscVector<libMesh::Number>& >(_f_I);
+    PetscVector<Number> &f_c= dynamic_cast<libMesh::PetscVector<libMesh::Number>& >(_f_I);
     
-//     if(_write_correction) set_solution(f_c);
+    if(_write_correction) set_solution(f_c);
     
-// }
+}
 
-// void
-// AntidiffusiveFluxes3::find_boundary(std::vector<int> &zero_rows_fluxes, std::vector<int> &_dc_boundary_id){
+void
+AntidiffusiveFluxes3::find_boundary(std::vector<int> &zero_rows_fluxes, std::vector<int> &_dc_boundary_id){
     
-//     ConstBndNodeRange & bnd_nodes = *_fe_problem.mesh().getBoundaryNodeRange();
-//     NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
-//     unsigned int i = 0;
-//     // std::cout<<"_dc_variables_id"<< _dc_variables_id[0].size()<<std::endl;
-//     // std::cout<<"_dc_boundary_id"<< _dc_boundary_id.size()<<std::endl;
-//     for(auto boundary = _dc_boundary_id.begin(); boundary != _dc_boundary_id.end(); ++boundary, i++)
-//     {
-//         // iterate just over boundary nodes
-//         for (const auto & bnode : bnd_nodes)
-//         {
-//             libMesh::Node * current_node = bnode->_node;
+    ConstBndNodeRange & bnd_nodes = *_fe_problem.mesh().getBoundaryNodeRange();
+    NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
+    unsigned int i = 0;
+    // std::cout<<"_dc_variables_id"<< _dc_variables_id[0].size()<<std::endl;
+    // std::cout<<"_dc_boundary_id"<< _dc_boundary_id.size()<<std::endl;
+    for(auto boundary = _dc_boundary_id.begin(); boundary != _dc_boundary_id.end(); ++boundary, i++)
+    {
+        // iterate just over boundary nodes
+        for (const auto & bnode : bnd_nodes)
+        {
+            libMesh::Node * current_node = bnode->_node;
             
-//             // check if node is in active boundary list
-//             if (_fe_problem.mesh().isBoundaryNode(current_node->id(), *boundary))
-//             {
-//                 // loop over all variables at this node
+            // check if node is in active boundary list
+            if (_fe_problem.mesh().isBoundaryNode(current_node->id(), *boundary))
+            {
+                // loop over all variables at this node
                 
-//                 for (auto v = 0; v < _fe_problem.getNonlinearSystemBase().nVariables(); v++)
-//                 {
-//                     const Variable & var = _nl.system().variable(v);
-//                     unsigned int var_num = var.number();
-//                     //std::cout<<"nnnnnnn"<< var_num <<std::endl;
+                for (auto v = 0; v < _fe_problem.getNonlinearSystemBase().nVariables(); v++)
+                {
+                    const Variable & var = _nl.system().variable(v);
+                    unsigned int var_num = var.number();
+                    //std::cout<<"nnnnnnn"<< var_num <<std::endl;
                     
-//                     // see if this variable has any dofs at this node
-//                     if (current_node->n_dofs(_fe_problem.getNonlinearSystemBase().number(), var_num) > 0)
-//                     {
-//                         // check if given variable has BC on node
+                    // see if this variable has any dofs at this node
+                    if (current_node->n_dofs(_fe_problem.getNonlinearSystemBase().number(), var_num) > 0)
+                    {
+                        // check if given variable has BC on node
                         
-//                         if(std::find(_dc_variables_id[i].begin(), _dc_variables_id[i].end(), var_num) != _dc_variables_id[i].end())
-//                         {
+                        if(std::find(_dc_variables_id[i].begin(), _dc_variables_id[i].end(), var_num) != _dc_variables_id[i].end())
+                        {
                             
-//                             // different components are not supported by moose at the moment...
-//                             //std::cout<<"kkkkkkkk"<< std::endl;
-//                             zero_rows_fluxes.push_back(
-//                                                        current_node->dof_number(_fe_problem.getNonlinearSystemBase().number(), var_num, 0));
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     }
+                            // different components are not supported by moose at the moment...
+                            //std::cout<<"kkkkkkkk"<< std::endl;
+                            zero_rows_fluxes.push_back(
+                                                       current_node->dof_number(_fe_problem.getNonlinearSystemBase().number(), var_num, 0));
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-//     //std::cout<<"zero_rows"<< zero_rows.size()<<std::endl;
-// }
+    //std::cout<<"zero_rows"<< zero_rows.size()<<std::endl;
+}
 
 
-// void
-// AntidiffusiveFluxes3::determine_dc_bnd_var_id(const std::vector<std::string> & BC_var){
-//     // automatic fill-in
-//     NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
+void
+AntidiffusiveFluxes3::determine_dc_bnd_var_id(const std::vector<std::string> & BC_var){
+    // automatic fill-in
+    NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
     
-//     std::vector<int> vec(_nl.nVariables());
+    std::vector<int> vec(_nl.nVariables());
     
-//     std::iota(vec.begin(), vec.end(), 0);
+    std::iota(vec.begin(), vec.end(), 0);
     
-//     unsigned int i;
+    unsigned int i;
     
-//     auto str_tmp = BC_var.begin();
+    auto str_tmp = BC_var.begin();
     
-//     PetscFunctionBegin;
-//     // going over all BC_ids
-//     for(i = 0; str_tmp != BC_var.end(); i++, str_tmp++)
-//     {
-//         std::vector<std::string> tmp = AntidiffusiveFluxes3::split_string(*str_tmp, '-');
+    PetscFunctionBegin;
+    // going over all BC_ids
+    for(i = 0; str_tmp != BC_var.end(); i++, str_tmp++)
+    {
+        std::vector<std::string> tmp = AntidiffusiveFluxes3::split_string(*str_tmp, '-');
         
-//         // check if variable assigned in the input file exists for given simulation
-//         bool var_flg = 1;
-//         for(auto t = tmp.begin(); t != tmp.end(); ++t)
-//         {
-//             if(atoi(t->c_str()) >= _nl.nVariables())
-//             var_flg = 0;
-//         }
+        // check if variable assigned in the input file exists for given simulation
+        bool var_flg = 1;
+        for(auto t = tmp.begin(); t != tmp.end(); ++t)
+        {
+            if(atoi(t->c_str()) >= _nl.nVariables())
+            var_flg = 0;
+        }
         
-//         // in case u havent put anything into input file, or u put too much
-//         if(*str_tmp == "-1" || var_flg == 0)
-//         {
-//             //std::cout<<"no_si"<<_nl.nVariables()<<std::endl;
-//             _dc_variables_id.push_back(vec);
-//         }
-//         else
-//         {
-//             unsigned int j;
-//             std::vector<int > one_BC_id;
-//             auto str_in = tmp.begin();
-//             for(j = 0; str_in != tmp.end(); j ++, str_in++)
-//             {
-//                 one_BC_id.push_back(atoi(str_in->c_str()));
-//             }
-//             _dc_variables_id.push_back(one_BC_id);
-//         }
-//     }
+        // in case u havent put anything into input file, or u put too much
+        if(*str_tmp == "-1" || var_flg == 0)
+        {
+            //std::cout<<"no_si"<<_nl.nVariables()<<std::endl;
+            _dc_variables_id.push_back(vec);
+        }
+        else
+        {
+            unsigned int j;
+            std::vector<int > one_BC_id;
+            auto str_in = tmp.begin();
+            for(j = 0; str_in != tmp.end(); j ++, str_in++)
+            {
+                one_BC_id.push_back(atoi(str_in->c_str()));
+            }
+            _dc_variables_id.push_back(one_BC_id);
+        }
+    }
     
-//     // check if u have same number of BC_ids in both parameters
-//     if(_dc_variables_id.size() != _dc_boundary_id.size())
-//     {
-//         _dc_variables_id.clear();
-//         for(auto i = 0; i != _dc_boundary_id.size(); i++)
-//         {
-//             _dc_variables_id.push_back(vec);
-//         }
-//     }
+    // check if u have same number of BC_ids in both parameters
+    if(_dc_variables_id.size() != _dc_boundary_id.size())
+    {
+        _dc_variables_id.clear();
+        for(auto i = 0; i != _dc_boundary_id.size(); i++)
+        {
+            _dc_variables_id.push_back(vec);
+        }
+    }
     
-//     // print out what is considered for zero-ing
-//     std::cout<<" ------ BC CONDITIONS Fluxes Begin ------ \n";
-//     unsigned int t = 0;
-//     //std::cout<<"_dc_variables_id.begin()"<<_dc_variables_id.size()<<std::endl;
-//     for(auto i = _dc_variables_id.begin(); i != _dc_variables_id.end();  t++, i++)
-//     {
-//         std::cout<<"\n BC_id:  "<< _dc_boundary_id[t] << "   var_ids:  ";
-//         std::for_each(i->begin(), i->end(), [](int i){ std::cout << i << "  " ; });
-//     }
-//     std::cout<<" ------ BC CONDITIONS Fluxes End ------ \n";
-// }
+    // print out what is considered for zero-ing
+    std::cout<<" ------ BC CONDITIONS Fluxes Begin ------ \n";
+    unsigned int t = 0;
+    //std::cout<<"_dc_variables_id.begin()"<<_dc_variables_id.size()<<std::endl;
+    for(auto i = _dc_variables_id.begin(); i != _dc_variables_id.end();  t++, i++)
+    {
+        std::cout<<"\n BC_id:  "<< _dc_boundary_id[t] << "   var_ids:  ";
+        std::for_each(i->begin(), i->end(), [](int i){ std::cout << i << "  " ; });
+    }
+    std::cout<<" ------ BC CONDITIONS Fluxes End ------ \n";
+}
 
 
 
 
 
-// std::vector<std::string>
-// AntidiffusiveFluxes3::split_string(const std::string & s, char delim)
-// {
+std::vector<std::string>
+AntidiffusiveFluxes3::split_string(const std::string & s, char delim)
+{
     
-//     std::vector<std::string> v;
+    std::vector<std::string> v;
     
-//     if (s.length() == 0)
-//     std::cerr << "Got an empty string. Split_string(...) is confused. \n";
+    if (s.length() == 0)
+    std::cerr << "Got an empty string. Split_string(...) is confused. \n";
     
-//     auto i = 0;
-//     auto pos = s.find(delim);
-//     while (pos != std::string::npos)
-//     {
-//         v.push_back(s.substr(i, pos - i));
-//         i = ++pos;
-//         pos = s.find(delim, pos);
+    auto i = 0;
+    auto pos = s.find(delim);
+    while (pos != std::string::npos)
+    {
+        v.push_back(s.substr(i, pos - i));
+        i = ++pos;
+        pos = s.find(delim, pos);
         
-//         if (pos == std::string::npos)
-//         v.push_back(s.substr(i, s.length()));
-//     }
+        if (pos == std::string::npos)
+        v.push_back(s.substr(i, s.length()));
+    }
     
-//     if (v.size() == 0) // if only one word is in the string
-//     v.push_back(s);
+    if (v.size() == 0) // if only one word is in the string
+    v.push_back(s);
     
-//     return v;
-// }
+    return v;
+}
 
-// void AntidiffusiveFluxes3::set_solution(PetscVector<Number> &correction)
-// {
-//     // copy projected solution into target es
+void AntidiffusiveFluxes3::set_solution(PetscVector<Number> &correction)
+{
+    // copy projected solution into target es
     
-//     MooseVariableFEBase  & main_var = _fe_problem.getVariable(0, "CM", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+    MooseVariableFEBase  & main_var = _fe_problem.getVariable(0, "CM", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
     
-//     MooseVariableFEBase  & aux_var_c = _fe_problem.getVariable(0, "correction", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+    MooseVariableFEBase  & aux_var_c = _fe_problem.getVariable(0, "correction", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
     
-//     MooseVariableFEBase  & sol_var = _fe_problem.getVariable(0, "CM", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
+    MooseVariableFEBase  & sol_var = _fe_problem.getVariable(0, "CM", Moose::VarKindType::VAR_ANY, Moose::VarFieldType::VAR_FIELD_STANDARD);
     
-//     // solution of the original system
-//     System & main_sys = main_var.sys().system();
+    // solution of the original system
+    System & main_sys = main_var.sys().system();
     
-//     //NumericVector<Number> * main_solution = main_sys.solution.get();
+    //NumericVector<Number> * main_solution = main_sys.solution.get();
     
-//     System & aux_sys = aux_var_c.sys().system();
+    System & aux_sys = aux_var_c.sys().system();
     
-//     NumericVector<Number> * aux_solution = aux_sys.solution.get();
+    NumericVector<Number> * aux_solution = aux_sys.solution.get();
     
-//     NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
+    NonlinearSystemBase & _nl = _fe_problem.getNonlinearSystemBase();
     
     
     
-//     {
+    {
         
-//         for (const auto & node : _fe_problem.es().get_mesh().local_node_ptr_range())
+        for (const auto & node : _fe_problem.es().get_mesh().local_node_ptr_range())
         
-//         {
-//             for (unsigned int comp = 0; comp < node->n_comp(main_sys.number(), main_var.number()); comp++)
+        {
+            for (unsigned int comp = 0; comp < node->n_comp(main_sys.number(), main_var.number()); comp++)
             
-//             {
+            {
                 
-//                 const dof_id_type proj_index = node->dof_number(_nl.number(), sol_var.number(), comp);
+                const dof_id_type proj_index = node->dof_number(_nl.number(), sol_var.number(), comp);
                 
-//                 //const dof_id_type to_index = node->dof_number(main_sys.number(), main_var.number(), comp);
+                //const dof_id_type to_index = node->dof_number(main_sys.number(), main_var.number(), comp);
                 
-//                 const dof_id_type to_index_c = node->dof_number(aux_sys.number(), aux_var_c.number(), comp);
+                const dof_id_type to_index_c = node->dof_number(aux_sys.number(), aux_var_c.number(), comp);
                 
-//                 //main_solution->set(to_index, sol(proj_index));
+                //main_solution->set(to_index, sol(proj_index));
                 
-//                 aux_solution->set(to_index_c, correction(proj_index));
-//             }
+                aux_solution->set(to_index_c, correction(proj_index));
+            }
             
-//         }
-//     }
+        }
+    }
     
     
     
-//     //main_solution->close();
-//     aux_solution->close();
-//     //main_sys.update();
-//     aux_sys.update();
+    //main_solution->close();
+    aux_solution->close();
+    //main_sys.update();
+    aux_sys.update();
     
-//     //ExodusII_IO (_fe_problem.es().get_mesh()).write_equation_systems("matrix_c.e", _fe_problem.es());
+    //ExodusII_IO (_fe_problem.es().get_mesh()).write_equation_systems("matrix_c.e", _fe_problem.es());
     
     
-// }
+}
 
 
 

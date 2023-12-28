@@ -24,6 +24,20 @@
 
 
 
+inline void convert_vec_SD(libMesh::NumericVector<libMesh::Number> &lm_vec,  utopia::UVector &utopia_vec) {
+    using namespace libMesh;
+    Vec p_vec = cast_ptr<libMesh::PetscVector<libMesh::Number> *>(&lm_vec)->vec();
+    utopia_vec.wrap(p_vec);
+}
+
+inline void convert_mat_SD(libMesh::SparseMatrix<libMesh::Number> &lm_mat, utopia::USparseMatrix &utopia_mat) {
+    using namespace libMesh;
+
+    Mat p_mat = cast_ptr<libMesh::PetscMatrix<libMesh::Number> *>(&lm_mat)->mat();
+    utopia::convert(p_mat, utopia_mat);
+    }
+
+
 registerMooseObject("parrot2App", SolveDiffusion);
 
 defineLegacyParams(SolveDiffusion);
@@ -50,6 +64,8 @@ InputParameters SolveDiffusion::validParams()
 
   params.addParam<std::string>("variable_name", "the variable name of the output");
 
+  params.addParam<bool>("multisubdomain",false,"multisubdomain");
+
   return params;
 }
 
@@ -64,7 +80,8 @@ _neumannFunctionNames  ( getParam<std::vector<FunctionName> >("neumann_function_
 _solverType(getParam<int>("solver_type")),
 _has_exodus_file(  isParamValid("exodus_file")  ),
 _has_nemesis_file( isParamValid("nemesis_file") ),
-_has_variable_name( isParamValid("variable_name") )
+_has_variable_name( isParamValid("variable_name") ),
+_multisubdomain(getParam<bool>("multisubdomain"))
 /*
 _aux_var_names(getParam<std::vector<AuxVariableName>>("aux_variable")),
 _vector_p(getParam<std::vector<int>>("block_id")),
@@ -233,6 +250,16 @@ void SolveDiffusion::solve()
   sol[0].close();
   _linearImplicitSystemP[0].update();
 
+  utopia::UVector U_b;
+  utopia::USparseMatrix U_m;
+
+  convert_vec_SD(b,U_b);
+  convert_mat_SD(M,U_m);
+
+
+  // U_m.write("system_matrix.m");
+  // U_b.write("system_vector.m");
+
   std::cout<<"SolveDiffusion::solve() stop\n";
 }
 
@@ -346,7 +373,16 @@ void SolveDiffusion::assemble()
     ke_I.resize (n_dofs , n_dofs);
     ke_I.zero();
 
-    _flowAndTransport[0].getPermeability(q_points,permeability);
+
+    int subdomain_id = elem->subdomain_id();
+
+    
+    if (_multisubdomain){
+      _flowAndTransport[0].getPermeabilityId(q_points,permeability,subdomain_id);
+    }
+    else{
+      _flowAndTransport[0].getPermeability(q_points,permeability);
+    }
 
     for (unsigned int i=0; i<phi.size(); i++)
       for (unsigned int j=0; j<phi.size(); j++)
@@ -407,6 +443,9 @@ void SolveDiffusion::assemble()
   M.close();
   I.close();
   b.close();
+
+
+
 
   std::cout << "SolveDiffusion::assemble stop\n";
 }

@@ -8,7 +8,7 @@
 // //* Licensed under LGPL 2.1, please see LICENSE for details
 // //* https://www.gnu.org/licenses/lgpl-2.1.html
 
-// #include "ComputeFluxUtopia.h"
+// #include "ComputeFluxUtopiaED.h"
 
 // // MOOSE includes
 // #include "Assembly.h"
@@ -24,13 +24,13 @@
 // #include "par_moonolith.hpp"
 // #include "utopia_MeshTransferOperator.hpp"
 
-// inline void convert_vec(libMesh::NumericVector<libMesh::Number> &lm_vec,  utopia::UVector &utopia_vec) {
+// inline void convert_vec_ED(libMesh::NumericVector<libMesh::Number> &lm_vec,  utopia::UVector &utopia_vec) {
 //     using namespace libMesh;
 //     Vec p_vec = cast_ptr<libMesh::PetscVector<libMesh::Number> *>(&lm_vec)->vec();
 //     utopia_vec.wrap(p_vec);
 // }
 
-// inline void convert_mat(libMesh::SparseMatrix<libMesh::Number> &lm_mat, utopia::USparseMatrix &utopia_mat) {
+// inline void convert_mat_ED(libMesh::SparseMatrix<libMesh::Number> &lm_mat, utopia::USparseMatrix &utopia_mat) {
 //     using namespace libMesh;
 
 //     Mat p_mat = cast_ptr<libMesh::PetscMatrix<libMesh::Number> *>(&lm_mat)->mat();
@@ -40,11 +40,11 @@
 // typedef utopia::USparseMatrix SparseMatT;
 
 
-// registerMooseObject("parrot2App", ComputeFluxUtopia);
+// registerMooseObject("parrot2App", ComputeFluxUtopiaED);
 
-// defineLegacyParams(ComputeFluxUtopia);
+// defineLegacyParams(ComputeFluxUtopiaED);
 
-// InputParameters ComputeFluxUtopia::validParams()
+// InputParameters ComputeFluxUtopiaED::validParams()
 // {
 //   InputParameters params = GeneralUserObject::validParams();
 
@@ -64,9 +64,14 @@
 
 //   params.addRequiredParam< std::vector<FunctionName> >("dirichlet_function_names_F", "The function.");
 
-//   params.addParam< std::vector<BoundaryName> >("neumann_sideset_names",std::vector<BoundaryName>(),"The ids of the nodeset to create");
+//   params.addParam< std::vector<BoundaryName> >("neumann_sideset_names_M",std::vector<BoundaryName>(),"The ids of the nodeset to create");
 
-//   params.addParam< std::vector<FunctionName> >("neumann_function_names",std::vector<FunctionName>(), "The function.");
+//   params.addParam< std::vector<FunctionName> >("neumann_function_names_M",std::vector<FunctionName>(), "The function.");
+
+//   params.addParam< std::vector<BoundaryName> >("neumann_sideset_names_F",std::vector<BoundaryName>(),"The ids of the nodeset to create");
+
+//   params.addParam< std::vector<FunctionName> >("neumann_function_names_F",std::vector<FunctionName>(), "The function.");
+
 
 //   params.addParam<std::string>("exodus_file", "the file name of the output");
 
@@ -90,7 +95,7 @@
 
 // }
 
-// ComputeFluxUtopia::ComputeFluxUtopia(const InputParameters & parameters) :
+// ComputeFluxUtopiaED::ComputeFluxUtopiaED(const InputParameters & parameters) :
 // GeneralUserObject(parameters),
 // _material(getParam<bool>("material")),
 // _material_name( getParam<std::string>("material_name") ),
@@ -102,8 +107,10 @@
 // _dirichletFunctionNames_M( getParam<std::vector<FunctionName> >("dirichlet_function_names_M") ),
 // _dirichletNodesetNames_F ( getParam<std::vector<BoundaryName> >("dirichlet_nodeset_names_F" ) ),
 // _dirichletFunctionNames_F( getParam<std::vector<FunctionName> >("dirichlet_function_names_F") ),
-// _neumannSidesetNames   ( getParam<std::vector<BoundaryName> >("neumann_sideset_names"   ) ),
-// _neumannFunctionNames  ( getParam<std::vector<FunctionName> >("neumann_function_names"  ) ),
+// _neumannSidesetNames_M   ( getParam<std::vector<BoundaryName> >("neumann_sideset_names_M"   ) ),
+// _neumannFunctionNames_M  ( getParam<std::vector<FunctionName> >("neumann_function_names_M"  ) ),
+// _neumannSidesetNames_F   ( getParam<std::vector<BoundaryName> >("neumann_sideset_names_F"   ) ),
+// _neumannFunctionNames_F  ( getParam<std::vector<FunctionName> >("neumann_function_names_F"  ) ),
 // _has_exodus_file(  isParamValid("exodus_file")  ),
 // _has_variable_name_1( isParamValid("variable_name_1") ),
 // _has_variable_name_2( isParamValid("variable_name_2") ),
@@ -176,9 +183,14 @@
 //   }
 
 
-//   if ( _neumannSidesetNames.size() != _neumannFunctionNames.size() )
+//   if ( _neumannSidesetNames_M.size() != _neumannFunctionNames_M.size() )
 //   {
-//     mooseError("_neumannSidesetNames.size() != _neumannFunctionNames.size()");
+//     mooseError("_neumannSidesetNames_M.size() != _neumannFunctionNames_M.size()");
+//   }
+
+//     if ( _neumannSidesetNames_F.size() != _neumannFunctionNames_F.size() )
+//   {
+//     mooseError("_neumannSidesetNames_F.size() != _neumannFunctionNames_F.size()");
 //   }
 
 //   if (_has_block_2_id){
@@ -186,9 +198,9 @@
 //   }
 // }
 
-// void ComputeFluxUtopia::init()
+// void ComputeFluxUtopiaED::init()
 // {
-//   std::cout<<"ComputeFluxUtopia::init() start\n";
+//   std::cout<<"ComputeFluxUtopiaED::init() start\n";
 
 //   _meshBase = &_equationSystemsM.get_mesh();
 
@@ -209,9 +221,9 @@
 //   _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_M1.c_str());
 //   _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_M2.c_str());
 
-//   _linearImplicitSystemM[0].add_vector(_vec_flux_name_M0.c_str());
-//   _linearImplicitSystemM[0].add_vector(_vec_flux_name_M1.c_str());
-//   _linearImplicitSystemM[0].add_vector(_vec_flux_name_M2.c_str());
+//   // _linearImplicitSystemM[0].add_vector(_vec_flux_name_M0.c_str());
+//   // _linearImplicitSystemM[0].add_vector(_vec_flux_name_M1.c_str());
+//   // _linearImplicitSystemM[0].add_vector(_vec_flux_name_M2.c_str());
 
 //   _linearImplicitSystemM[0].add_vector(_vec_rhs_name_M0.c_str());
 //   _linearImplicitSystemM[0].add_vector(_vec_rhs_name_M1.c_str());
@@ -240,9 +252,9 @@
 //   _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_F1.c_str());
 //   _linearImplicitSystemM[0].add_matrix(_mat_boundary_name_F2.c_str());
 
-//   _linearImplicitSystemF[0].add_vector(_vec_flux_name_F0.c_str());
-//   _linearImplicitSystemF[0].add_vector(_vec_flux_name_F1.c_str());
-//   _linearImplicitSystemF[0].add_vector(_vec_flux_name_F2.c_str());
+//   // _linearImplicitSystemF[0].add_vector(_vec_flux_name_F0.c_str());
+//   // _linearImplicitSystemF[0].add_vector(_vec_flux_name_F1.c_str());
+//   // _linearImplicitSystemF[0].add_vector(_vec_flux_name_F2.c_str());
 
 //   _linearImplicitSystemF[0].add_vector(_vec_rhs_name_F0.c_str());
 //   _linearImplicitSystemF[0].add_vector(_vec_rhs_name_F1.c_str());
@@ -288,22 +300,30 @@
 //     _dirichletFunctions_F.push_back(&func_F);
 //   }
 
-//   for (int i=0; i<_neumannFunctionNames.size(); ++i)
+//   for (int i=0; i<_neumannFunctionNames_M.size(); ++i)
 //   {
-//     Function const & func=getFunctionByName( _neumannFunctionNames.at(i) );
-//     _neumannFunctions.push_back(&func);
+//     Function const & fun_M=getFunctionByName( _neumannFunctionNames_M.at(i) );
+//     _neumannFunctions_M.push_back(&fun_M);
+//   }
+
+//     for (int i=0; i<_neumannFunctionNames_F.size(); ++i)
+//   {
+//     //std::cout<<"neumannFunctionNames_F.at(i)"<<_neumannFunctionNames_F.at(i)<<std::endl;
+//     Function const & fun_F=getFunctionByName( _neumannFunctionNames_F.at(i) );
+//     _neumannFunctions_F.push_back(&fun_F);
 //   }
 
 //   _dirichletSidesetIds_M = MooseMeshUtils::getBoundaryIDs(_meshBase[0], _dirichletNodesetNames_M, true);
 //   _dirichletSidesetIds_F = MooseMeshUtils::getBoundaryIDs(_meshBaseF[0], _dirichletNodesetNames_F, true);
-//   _neumannSidesetIds   = MooseMeshUtils::getBoundaryIDs(_meshBase[0], _neumannSidesetNames,   true);
+//   _neumannSidesetIds_M   = MooseMeshUtils::getBoundaryIDs(_meshBase[0], _neumannSidesetNames_M,   true);
+//   _neumannSidesetIds_F   = MooseMeshUtils::getBoundaryIDs(_meshBase[0], _neumannSidesetNames_F,   true);
 
-//   std::cout<<"ComputeFluxUtopia::init() stop\n";
+//   std::cout<<"ComputeFluxUtopiaED::init() stop\n";
 // }
 
-// void ComputeFluxUtopia::setDirichletMatrix()
+// void ComputeFluxUtopiaED::setDirichletMatrix()
 // {
-//   std::cout<<"ComputeFluxUtopia::setDirichletMatrix() start\n";
+//   std::cout<<"ComputeFluxUtopiaED::setDirichletMatrix() start\n";
 
 //   NumericVector<Number> & dM = _linearImplicitSystemM[0].get_vector(_vec_dir_M.c_str());
 //   dM=1.0;
@@ -316,6 +336,9 @@
 //     {
 //       if ( boundary_info.has_boundary_id(node,_dirichletSidesetIds_M.at(i)) )
 //       {
+
+//         //std::cout<<"dirichletBoundaryM is "<<_dirichletSidesetIds_M.at(i)<<"and size is "<< _dirichletSidesetIds_M.size()<<std::endl;
+
 //         std::vector<dof_id_type> di;
 //         _dof_map[0].dof_indices (node,di, 0);
 //         if (di.size()!=1)
@@ -324,7 +347,7 @@
 //         }
 //         dof_id_type index=di.at(0);
 //         _dirIds.push_back(index);
-
+//         //std::cout<<"index"<<index<<" and "<<_dirichletSidesetIds_M.at(i)<<std::endl;
 //         dM.set(index,0.0);
 //         break;
 //       }
@@ -334,13 +357,13 @@
 //   dM.close();
 
 
-//   std::cout<<"ComputeFluxUtopia::setDirichletMatrix() stop\n";
+//   std::cout<<"ComputeFluxUtopiaED::setDirichletMatrix() stop\n";
 // }
 
 
-// void ComputeFluxUtopia::setDirichletFracture()
+// void ComputeFluxUtopiaED::setDirichletFracture()
 // {
-//   std::cout<<"ComputeFluxUtopia::setDirichletFracture() start\n";
+//   std::cout<<"ComputeFluxUtopiaED::setDirichletFracture() start\n";
 
 //   NumericVector<Number> & dF = _linearImplicitSystemF[0].get_vector(_vec_dir_F.c_str());
  
@@ -352,12 +375,14 @@
 //   {
 //     for (int i=0; i<_dirichletSidesetIds_F.size(); ++i)
 //     {
-//      // std::cout<<"dirichletBoundar is "<<_dirichletSidesetIds_F.at(i)<<"and size is "<< _dirichletSidesetIds_F.size()<<std::endl;
+  
 
 //       if ( boundary_info.has_boundary_id(nodeF,_dirichletSidesetIds_F.at(i)) )
 //       {
 //         std::vector<dof_id_type> di;
 //         _dof_mapF[0].dof_indices (nodeF,di, 0);
+
+//         //std::cout<<"dirichletBoundaryF is "<<_dirichletSidesetIds_F.at(i)<<"and size is "<< _dirichletSidesetIds_F.size()<<std::endl;
 //         if (di.size()!=1)
 //         {
 //           mooseError("di.size()!=1");
@@ -374,12 +399,12 @@
 //   dF.close();
 
 
-//   std::cout<<"ComputeFluxUtopia::setDirichletFracture() stop\n";
+//   std::cout<<"ComputeFluxUtopiaED::setDirichletFracture() stop\n";
 // }
 
-// void ComputeFluxUtopia::solve()
+// void ComputeFluxUtopiaED::solve()
 // {
-//   std::cout<<"ComputeFluxUtopia::solveMatrix() start\n";
+//   std::cout<<"ComputeFluxUtopiaED::solveMatrix() start\n";
 
 //   SparseMatrix<Number> & AM0 = _linearImplicitSystemM[0].get_matrix(_mat_domain_name_M0.c_str());
 //   SparseMatrix<Number> & AM1 = _linearImplicitSystemM[0].get_matrix(_mat_domain_name_M1.c_str());
@@ -389,9 +414,9 @@
 //   SparseMatrix<Number> & BM1 = _linearImplicitSystemM[0].get_matrix(_mat_boundary_name_M1.c_str());
 //   SparseMatrix<Number> & BM2 = _linearImplicitSystemM[0].get_matrix(_mat_boundary_name_M2.c_str());
 
-//   NumericVector<Number> & fM0 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M0.c_str());
-//   NumericVector<Number> & fM1 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M1.c_str());
-//   NumericVector<Number> & fM2 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M2.c_str());
+//   // NumericVector<Number> & fM0 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M0.c_str());
+//   // NumericVector<Number> & fM1 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M1.c_str());
+//   // NumericVector<Number> & fM2 = _linearImplicitSystemM[0].get_vector(_vec_flux_name_M2.c_str());
   
 //   NumericVector<Number> & bM0 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M0.c_str());
 //   NumericVector<Number> & bM1 = _linearImplicitSystemM[0].get_vector(_vec_rhs_name_M1.c_str());
@@ -444,65 +469,65 @@
 //       std::unique_ptr<NumericVector<Number>> & solutionPointer(linearImplicitSystem.solution);
 //       NumericVector<Number> * solM = solutionPointer.get();
 
-//       AM0.vector_mult(fM0,solM[0]);
-//       fM0*=-1.0;
-//       fM0+=bM0;
-//       fM0*=dM;
-//       fM0.close();
+//       // AM0.vector_mult(fM0,solM[0]);
+//       // fM0*=-1.0;
+//       // fM0+=bM0;
+//       // fM0*=dM;
+//       // fM0.close();
 
 
-//       AM1.vector_mult(fM1,solM[0]);
-//       fM1*=-1.0;
-//       fM1+=bM1;
-//       fM1*=dM;
-//       fM1.close();
+//       // AM1.vector_mult(fM1,solM[0]);
+//       // fM1*=-1.0;
+//       // fM1+=bM1;
+//       // fM1*=dM;
+//       // fM1.close();
 
 
-//       // utopia::UVector rhs_m0;
-//       // utopia::USparseMatrix A_m0;
+//       // // utopia::UVector rhs_m0;
+//       // // utopia::USparseMatrix A_m0;
 
-//       // utopia::convert(vec_m0, rhs_m0);
-//       // utopia::convert(const_cast<libMesh::PetscMatrix<libMesh::Number> &>(*mat_m0).mat(), A_m0);
-//       // libMesh::PetscMatrix<libMesh::Number> *mat_m0 = dynamic_cast<libMesh::PetscMatrix<libMesh::Number>* >(&A0);
-//       // Vec vec_m0 = static_cast<libMesh::PetscVector<libMesh::Number> *>(&f0)->vec();
+//       // // utopia::convert(vec_m0, rhs_m0);
+//       // // utopia::convert(const_cast<libMesh::PetscMatrix<libMesh::Number> &>(*mat_m0).mat(), A_m0);
+//       // // libMesh::PetscMatrix<libMesh::Number> *mat_m0 = dynamic_cast<libMesh::PetscMatrix<libMesh::Number>* >(&A0);
+//       // // Vec vec_m0 = static_cast<libMesh::PetscVector<libMesh::Number> *>(&f0)->vec();
 
-//       if (_has_block_2_id){
-//         AM2.vector_mult(fM2,solM[0]);
-//         fM2*=-1.0;
-//         fM2+=bM2;
-//         fM2*=dM;
-//         fM2.close();
-//       }
+//       // if (_has_block_2_id){
+//       //   AM2.vector_mult(fM2,solM[0]);
+//       //   fM2*=-1.0;
+//       //   fM2+=bM2;
+//       //   fM2*=dM;
+//       //   fM2.close();
+//       // }
 
-//       std::cout<<fM0.sum()<<std::endl;
-//       std::cout<<fM1.sum()<<std::endl;
+//       // std::cout<<fM0.sum()<<std::endl;
+//       // std::cout<<fM1.sum()<<std::endl;
 
-//       if(_has_block_2_id) std::cout<<fM2.sum()<<std::endl;
+//       // if(_has_block_2_id) std::cout<<fM2.sum()<<std::endl;
 
-//       std::cout<<iM0.sum()<<std::endl;
-//       std::cout<<iM1.sum()<<std::endl;
+//       // std::cout<<iM0.sum()<<std::endl;
+//       // std::cout<<iM1.sum()<<std::endl;
 
-//       if(_has_block_2_id) std::cout<<iM2.sum()<<std::endl;
+//       // if(_has_block_2_id) std::cout<<iM2.sum()<<std::endl;
 
-//       dM=fM0;
-//       dM*=iM0;
+//       // dM=fM0;
+//       // dM*=iM0;
 
-//       bM0.close();
+//       // bM0.close();
 
-//       dM=fM1;
-//       dM*=iM1;
-//       bM1.close();
+//       // dM=fM1;
+//       // dM*=iM1;
+//       // bM1.close();
 
-//       if(_has_block_2_id){
-//       dM=fM2;
-//       dM*=iM2;
-//       bM2.close();
-//     }
+//       // if(_has_block_2_id){
+//       // dM=fM2;
+//       // dM*=iM2;
+//       // bM2.close();
+//       //}
 
-//   std::cout<<"ComputeFluxUtopia::solveMatrix() stop\n";
+//   std::cout<<"ComputeFluxUtopiaED::solveMatrix() stop\n";
 
 
-//   std::cout<<"ComputeFluxUtopia::solveFracture() start\n";
+//   std::cout<<"ComputeFluxUtopiaED::solveFracture() start\n";
 
 //   SparseMatrix<Number> & AF0 = _linearImplicitSystemF[0].get_matrix(_mat_domain_name_F0.c_str());
 //   SparseMatrix<Number> & AF1 = _linearImplicitSystemF[0].get_matrix(_mat_domain_name_F1.c_str());
@@ -512,9 +537,9 @@
 //   SparseMatrix<Number> & BF1 = _linearImplicitSystemF[0].get_matrix(_mat_boundary_name_F1.c_str());
 //   SparseMatrix<Number> & BF2 = _linearImplicitSystemF[0].get_matrix(_mat_boundary_name_F2.c_str());
 
-//   NumericVector<Number> & fF0 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F0.c_str());
-//   NumericVector<Number> & fF1 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F1.c_str());
-//   NumericVector<Number> & fF2 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F2.c_str());
+//   // NumericVector<Number> & fF0 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F0.c_str());
+//   // NumericVector<Number> & fF1 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F1.c_str());
+//   // NumericVector<Number> & fF2 = _linearImplicitSystemF[0].get_vector(_vec_flux_name_F2.c_str());
   
 //   NumericVector<Number> & bF0 = _linearImplicitSystemF[0].get_vector(_vec_rhs_name_F0.c_str());
 //   NumericVector<Number> & bF1 = _linearImplicitSystemF[0].get_vector(_vec_rhs_name_F1.c_str());
@@ -522,9 +547,9 @@
   
 //   NumericVector<Number> & dF  = _linearImplicitSystemF[0].get_vector(_vec_dir_F.c_str());
 
-//   NumericVector<Number> & iF0 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F0.c_str());
-//   NumericVector<Number> & iF1 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F1.c_str());
-//   NumericVector<Number> & iF2 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F2.c_str());
+//   // NumericVector<Number> & iF0 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F0.c_str());
+//   // NumericVector<Number> & iF1 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F1.c_str());
+//   // NumericVector<Number> & iF2 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F2.c_str());
 
 //   MultiApp &  _multi_app = * _fe_problem.getMultiApp(_multiapp_name);
 //   FEProblemBase & F_problem = _multi_app.appProblemBase(0);
@@ -568,70 +593,75 @@
 //   std::unique_ptr<NumericVector<Number>> & solutionPointerF(linearImplicitSystemF.solution);
 //   NumericVector<Number> * solF = solutionPointerF.get();
 
-//   AF0.vector_mult(fF0,solF[0]);
-//   fF0*=-1.0;
-//   fF0+=bF0;
-//   fF0*=dF;
-//   fF0.close();
+//   // AF0.vector_mult(fF0,solF[0]);
+//   // fF0*=-1.0;
+//   // fF0+=bF0;
+//   // fF0*=dF;
+//   // fF0.close();
 
 
-//   AF1.vector_mult(fF1,solF[0]);
-//   fF1*=-1.0;
-//   fF1+=bF1;
-//   fF1*=dF;
-//   fF1.close();
+//   // AF1.vector_mult(fF1,solF[0]);
+//   // fF1*=-1.0;
+//   // fF1+=bF1;
+//   // fF1*=dF;
+//   // fF1.close();
 
 
-//   AF2.vector_mult(fF2,solF[0]);
-//   fF2*=-1.0;
-//   fF2+=bF2;
-//   fF2*=dF;
-//   fF2.close();
+//   // AF2.vector_mult(fF2,solF[0]);
+//   // fF2*=-1.0;
+//   // fF2+=bF2;
+//   // fF2*=dF;
+//   // fF2.close();
   
-//   std::cout<<fF0.sum()<<std::endl;
-//   std::cout<<fF1.sum()<<std::endl;
-//   std::cout<<fF2.sum()<<std::endl;
+//   // std::cout<<fF0.sum()<<std::endl;
+//   // std::cout<<fF1.sum()<<std::endl;
+//   // std::cout<<fF2.sum()<<std::endl;
 
-//   if(_has_block_2_id) std::cout<<fM2.sum()<<std::endl;
+//   // if(_has_block_2_id) std::cout<<fM2.sum()<<std::endl;
 
-//   std::cout<<iF0.sum()<<std::endl;
-//   std::cout<<iF1.sum()<<std::endl;
+//   // // std::cout<<iF0.sum()<<std::endl;
+//   // // std::cout<<iF1.sum()<<std::endl;
 
-//   if(_has_block_2_id) std::cout<<iM2.sum()<<std::endl;
+//   // if(_has_block_2_id) std::cout<<iM2.sum()<<std::endl;
 
 
-//   std::cout<<"ComputeFluxUtopia::solveFracture() stop\n";
 
-//   std::cout<<"Total Flux side 0 is "<<std::setprecision(4)<<fF0.sum() + fM0.sum()<<std::endl;
-//   std::cout<<"Total Flux side 1 is "<<std::setprecision(4)<<fF1.sum() + fM1.sum()<<std::endl;
+
+//   // std::cout<<"ComputeFluxUtopiaED::solveFracture() stop\n";
+
+//   // std::cout<<"Total Flux side 0 is "<<std::setprecision(4)<<fF0.sum() + fM0.sum()<<std::endl;
+//   // std::cout<<"Total Flux side 1 is "<<std::setprecision(4)<<fF1.sum() + fM1.sum()<<std::endl;
 
 //   moonolith::Moonolith::instance().verbose(true);
 
 
 //   utopia::USparseMatrix A_M0, A_F0, A_M1, A_F1, B_M0, B_M1, B_F0, B_F1, A_F2;
 
-//   utopia::UVector rhs_M0, rhs_M1, rhs_F0, rhs_F1, sol_M, sol_F, m_m0, m_m1, m_f0, m_f1, flux_rhs0, flux_rhs1, rhs_F2, fluxL_rhs0, fluxL_rhs1, d_F;
+//   utopia::UVector rhs_M0, rhs_M1, rhs_F0, rhs_F1, m_m0, m_m1, m_f0, m_f1, flux_rhs0, flux_rhs1, rhs_F2,  d_F, d_M, sol_M, sol_F;
 
-//   convert_vec(fM0, rhs_M0);
-//   convert_mat(AM0, A_M0);
-//   convert_mat(BM0, B_M0);
+//   convert_vec_ED(bM0, rhs_M0);
+//   convert_mat_ED(AM0, A_M0);
+//   convert_mat_ED(BM0, B_M0);
 
-//   convert_vec(fF0, rhs_F0);
-//   convert_mat(AF0, A_F0);
-//   convert_mat(BF0, B_F0);
+//   convert_vec_ED(bF0, rhs_F0);
+//   convert_mat_ED(AF0, A_F0);
+//   convert_mat_ED(BF0, B_F0);
 
-//   convert_vec(fM1, rhs_M1);
-//   convert_mat(AM1, A_M1);
-//   convert_mat(BM1, B_M1);
+//   convert_vec_ED(bM1, rhs_M1);
+//   convert_mat_ED(AM1, A_M1);
+//   convert_mat_ED(BM1, B_M1);
 
-//   convert_vec(fF1, rhs_F1);
-//   convert_mat(AF1, A_F1);
-//   convert_mat(BF1, B_F1);
+//   convert_vec_ED(bF1, rhs_F1);
+//   convert_mat_ED(AF1, A_F1);
+//   convert_mat_ED(BF1, B_F1);
+
+//   convert_vec_ED(bF2, rhs_F2);
+//   convert_mat_ED(AF2, A_F2);
 
 
-//   convert_mat(AF2, A_F2);
-//   convert_vec(fF2, rhs_F2);
-//   convert_vec(dF, d_F);
+
+//   convert_vec_ED(dF, d_F);
+//   convert_vec_ED(dM, d_M);
 
 
 //   utopia::TransferOptions opts;
@@ -645,7 +675,7 @@
 //   opts.tags             = {} ;
 
 
-//   std::cout<<"ComputeFluxUtopia::GlobalOp \n";
+//   std::cout<<"ComputeFluxUtopiaED::GlobalOp \n";
 
 //   utopia::MeshTransferOperator MtoGlobal(
 //      utopia::make_ref(_meshBase[0]),
@@ -676,9 +706,9 @@
 
 //   //auto _T_ptr = Mt.get<utopia::PseudoL2TransferOperator>()->matrix(); //matrices[0];
 
-//   rename("load_matrix", "Op");
+//   // rename("load_matrix", "Op");
   
-//   _TGlobal.write("load_matrix.m");
+//   // _TGlobal.write("load_matrix.m");
 
 //   utopia::TransferOptions optsL0;
        
@@ -691,7 +721,7 @@
 //   optsL0.tags             = {{1,3}} ;
 
 
-//   std::cout<<"ComputeFluxUtopia::LocalOps 0\n";
+//   std::cout<<"ComputeFluxUtopiaED::LocalOps 0\n";
 
 //   utopia::MeshTransferOperator MtoLocal0(
 //      utopia::make_ref(_meshBase[0]),
@@ -720,15 +750,15 @@
 
 //   utopia::UVector inv_elem_0(inv_diag_l, 0.);
 
-//   utopia::e_pseudo_inv(diag_elem_0, inv_elem_0, 1e-12);
+//   utopia::e_pseudo_inv(diag_elem_0, inv_elem_0, 1e-6);
 
 //   utopia::USparseMatrix D0inv = utopia::diag(inv_elem_0);
 
 //   utopia::USparseMatrix _T0Local = D0inv * (*BL0);
 
-//   rename("load_matrix_13", "OpLocal13");
+//   //rename("load_matrix_13", "OpLocal13");
 
-//   _T0Local.write("load_matrix_13.m");
+//   //_T0Local.write("load_matrix_13.m");
 
 
 //   utopia::TransferOptions optsL1;
@@ -742,7 +772,7 @@
 //   optsL1.tags             = {{2,4}} ;
 
 
-//   std::cout<<"ComputeFluxUtopia::LocalOps 0\n";
+//   std::cout<<"ComputeFluxUtopiaED::LocalOps 0\n";
 
 //   utopia::MeshTransferOperator MtoLocal1(
 //      utopia::make_ref(_meshBase[0]),
@@ -767,7 +797,7 @@
   
 //   utopia::UVector inv_elem_1;
 
-//   utopia::e_pseudo_inv(diag_elem_1, inv_elem_1, 1e-12);
+//   utopia::e_pseudo_inv(diag_elem_1, inv_elem_1, 1e-6);
 
 //   utopia::USparseMatrix D1inv = utopia::diag(inv_elem_1);
 
@@ -783,14 +813,19 @@
 
 
 
-// /*convert_vec(iF0, m_f0);
-//   convert_vec(iF1, m_f1);
+// /*convert_vec_ED(iF0, m_f0);
+//   convert_vec_ED(iF1, m_f1);
 
-//   convert_vec(iM0, m_m0);
-//   convert_vec(iM1, m_m1);
+//   convert_vec_ED(iM0, m_m0);
+//   convert_vec_ED(iM1, m_m1);
 // */
-//   convert_vec(*solM, sol_M);
-//   convert_vec(*solF, sol_F);
+//   convert_vec_ED(*solM, sol_M);
+
+//   // utopia::UVector sol_M = utopia::e_mul(d_M, sol_Md);
+
+//   convert_vec_ED(*solF, sol_F);
+
+//   // utopia::UVector sol_F = utopia::e_mul(d_F, sol_Fd);
 
 //   utopia::USparseMatrix _TGlobal_t   = utopia::transpose(_TGlobal);
 
@@ -798,24 +833,24 @@
 
 //   utopia::USparseMatrix _T1Local_t   = utopia::transpose(_T1Local);
 
-//   _TGlobal.write("matrixGlobal.m");
+//   // _TGlobal.write("matrixGlobal.m");
 
-//   _T0Local.write("matrixLocal0.m");
+//   // _T0Local.write("matrixLocal0.m");
 
-//   _T1Local.write("matrixLocal1.m");
+//   // _T1Local.write("matrixLocal1.m");
 
 //   // rename("matrixF0", "AF0");
 
-//   std::cout<<"ComputeFluxUtopia::GlobalFluxes \n";
+//   // std::cout<<"ComputeFluxUtopiaED::GlobalFluxes \n";
 
-//   flux_rhs0 = (A_M0 + _TGlobal_t * A_F0 * _TGlobal) * sol_M - rhs_M0 - _TGlobal_t * rhs_F0;
-//   flux_rhs1 = (A_M1 + _TGlobal_t * A_F1 * _TGlobal) * sol_M - rhs_M1 - _TGlobal_t * rhs_F1;
+//   // flux_rhs0 = (A_M0 + _TGlobal_t * A_F0 * _TGlobal) * sol_M - rhs_M0 - _TGlobal_t * rhs_F0;
+//   // flux_rhs1 = (A_M1 + _TGlobal_t * A_F1 * _TGlobal) * sol_M - rhs_M1 - _TGlobal_t * rhs_F1;
   
-//   std::cout<<std::setprecision(4) << utopia::sum(flux_rhs0)<<std::endl;
-//   std::cout<<std::setprecision(4) << utopia::sum(flux_rhs1)<<std::endl;
+//   // std::cout<<std::setprecision(4) << utopia::sum(flux_rhs0)<<std::endl;
+//   // std::cout<<std::setprecision(4) << utopia::sum(flux_rhs1)<<std::endl;
 
 
-//   std::cout<<"ComputeFluxUtopia::LocalFluxes stop\n";
+//   // std::cout<<"ComputeFluxUtopiaED::LocalFluxes stop\n";
 
 //   utopia::UVector temp1 = _T0Local_t * rhs_F2;
 
@@ -844,19 +879,31 @@
 
 //   utopia::UVector lambda_1 = D1inv * A_F1 * _TGlobal * sol_M - D1inv * rF_1;
 
-//   fluxL_rhs0 = (A_M0 + _T0Local_t * A_F0 * _TGlobal) * sol_M - rhs_M0 - _TGlobal_t * rhs_F0;
+//   utopia::UVector fluxL_rhst0 = -1.0*(A_M0 + _T0Local_t * A_F0 * _TGlobal) * sol_M + rhs_M0 + _TGlobal_t * rhs_F0;
 
-//   fluxL_rhs1 = (A_M1 + _T1Local_t * A_F1 * _TGlobal) * sol_M - rhs_M1 - _TGlobal_t * rhs_F1;
+//   utopia::UVector fluxL_rhst1 = -1.0*(A_M1 + _T1Local_t * A_F1 * _TGlobal) * sol_M + rhs_M1 + _TGlobal_t * rhs_F1;
 
-//   std::cout<<"New Fluxes on block  0 is ==>"<< std::setprecision(12) << utopia::sum(fluxL_rhs0) << std::endl;
-//   std::cout<<"New Fluxes on bloack 1 is ==>"<< std::setprecision(12) << utopia::sum(fluxL_rhs1) << std::endl;
+ 
+//   utopia::UVector fluxL_rhs0 = utopia::e_mul(d_M, fluxL_rhst0);
+
+//   utopia::UVector fluxL_rhs1 = utopia::e_mul(d_M, fluxL_rhst1);
+
+//   std::cout<<"New Fluxes on block  0 is ==>"<< std::setprecision(6) << utopia::sum(fluxL_rhs0) << std::endl;
+//   std::cout<<"New Fluxes on bloack 1 is ==>"<< std::setprecision(6) << utopia::sum(fluxL_rhs1) << std::endl;
 
 
-//   fluxL_rhs1.write("FluxL1.m");
+//   // utopia::UVector contributoM = rhs_M0;
+//   // utopia::UVector contributoF = rhs_F0;
 
-//   //utopia::disp(fluxL_rhs0);
+//   // // fluxL_rhs0 = (A_M0 ) * sol_M - rhs_M0;
 
-//   fluxL_rhs0.write("FluxL0.m");
+//   // // fluxL_rhs1 = (A_M1 ) * sol_M - rhs_M1;
+//   // // fluxL_rhs1.write("FluxL1.m");
+
+//   // //utopia::disp(fluxL_rhs0);
+
+//   //d_M.write("dM.m");
+//   // contributoF.write("contributoF.m");
 
 //   // std::cout<<"New Fluxes on bloack 0 with STATIC  is ==>"<<std::setprecision(12) <<utopia::sum( A_F0 * _TGlobal * sol_M)<<std::endl;
 //   // utopia::UVector a = (_T0Local_t * A_F0 * _TGlobal) * sol_M ;
@@ -864,18 +911,29 @@
 
 
 
-//   utopia::UVector cM_0 = A_M0 * sol_M  + utopia::transpose(*BL0) * lambda - rhs_M0;
+//   utopia::UVector cM_t0 = -1.0*A_M0 * sol_M  - utopia::transpose(*BL0) * lambda + rhs_M0;
 
-//   utopia::UVector cF_0 = A_F0 * sol_F - (*DL0) * lambda - rhs_F0;
+//   utopia::UVector cF_t0 = -1.0*A_F0 * sol_F + (*DL0) * lambda + rhs_F0;
 
-//   utopia::UVector cF_1 = A_F1 * sol_F - (*DL1) * lambda - rhs_F1;
+//   utopia::UVector cF_t1 = -1.0*A_F1 * sol_F + (*DL1) * lambda + rhs_F1;
 
-//   utopia::UVector cM_1 = A_M1 * sol_M  + utopia::transpose(*BL1) * lambda - rhs_M1 ;
+//   utopia::UVector cM_t1 = -1.0*A_M1 * sol_M  - utopia::transpose(*BL1) * lambda + rhs_M1 ;
+
+//   utopia::UVector cM_0 = utopia::e_mul(d_M, cM_t0);
+
+//   utopia::UVector cM_1 = utopia::e_mul(d_M, cM_t1);
+
+//   utopia::UVector cF_0 = utopia::e_mul(d_F, cF_t0);
+
+//   utopia::UVector cF_1 = utopia::e_mul(d_F, cF_t1);
+
+//   std::cout<<"ComputeFluxUtopiaED::LocalFluxes Huhges stop\n";
+//   // lambda.write("lambda.m");
+
+//   // lambda_0.write("lambda_0.m");
 
 
-
-//   std::cout<<"ComputeFluxUtopia::LocalFluxes Huhges stop\n";
-//   // c.write("lambda.m");
+//   // lambda_1.write("lambda_1.m");
 
 //   std::cout << std::fixed;
 
@@ -883,55 +941,37 @@
 
 //   // utopia::UVector vec_1 = utopia::sum(cM_0) + utopia::sum(cF_0);
 
-//   std::cout<< "Hughes Fluxes on bloack 0 is ==>" << std::setprecision(12) << utopia::sum(cM_0) + utopia::sum(cF_0) <<std::endl;
+//   std::cout<< "Hughes Fluxes on bloack 0 is ==>" << std::setprecision(6) << utopia::sum(cM_0) + utopia::sum(cF_0) <<std::endl;
 
-//   std::cout<< "Hughes Fluxes on block 1 is ==>" <<std::setprecision(12) << utopia::sum(cM_1) + utopia::sum(cF_1)<<std::endl;
-
-
+//   std::cout<< "Hughes Fluxes on block 1 is ==>" <<std::setprecision(6) << utopia::sum(cM_1) + utopia::sum(cF_1)<<std::endl;
 
 
-//   convert_vec(iM0, m_m0);
-//   convert_vec(iM1, m_m1);
 
 
-//   utopia::UVector flux_side_0 = utopia::e_mul(m_m0, fluxL_rhs0);
+//   convert_vec_ED(iM0, m_m0);
+//   convert_vec_ED(iM1, m_m1);
+
+//   // utopia::UVector diag_elem_m0 = utopia::sum(m_m0,1);
+  
+//   utopia::UVector inv_elem_m0;
+
+//   utopia::e_pseudo_inv(m_m0, inv_elem_m0, 1e-6);
+
+//   utopia::USparseMatrix M0inv = utopia::diag(inv_elem_m0);
+
+//   // utopia::UVector diag_elem_m1 = utopia::sum(m_m1,1);
+  
+//   utopia::UVector inv_elem_m1;
+
+//   utopia::e_pseudo_inv(m_m1, inv_elem_m1, 1e-6);
+
+//   utopia::USparseMatrix M1inv = utopia::diag(inv_elem_m1);
 
 
-//   utopia::UVector flux_side_1 = utopia::e_mul(m_m1, fluxL_rhs1);
+//   utopia::UVector flux_side_0 = M0inv * fluxL_rhs0;
+//   utopia::UVector flux_side_1 = -1.0 * M1inv * fluxL_rhs0;
 
-//   // std::cout<< "Fluxes in the fracture 0 ==>" <<std::setprecision(12) << utopia::sum(_T0Local_t * cF_0) <<std::endl;
-
-//   // std::cout<< "Fluxes in the fracture 0 Tt*Cf + cM0==>" <<std::setprecision(12) << utopia::sum(_T0Local_t * cF_0 + cM_0) <<std::endl;
-
-//   // utopia::disp(lambda);
-//   // utopia::disp(lambda_0);
-//   // utopia::disp(lambda_1);
-
-//   // std::cout<< std::setprecision(5) << utopia::sum(cM_1)<<std::endl;
-//   // std::cout<< std::setprecision(5) << utopia::sum(cF_1)<<std::endl;
-//   // std::cout<< std::setprecision(15) <<utopia::sum(rhs_M0)<<std::endl;
-//   // std::cout<< std::setprecision(15) <<utopia::sum(rhs_F0)<<std::endl;
-
-//   // flux_rhs0 = (_T_t * A_F0 * (*_T_ptr)) * sol_M;
-
-//   // flux_rhs1 = (_T13_t * A_F2 * (*_T13_ptr)) * sol_M;
-
-//   // A_F0.write("AF0.m");
-//   // A_F2.write("AF2.m");
-
-//   // flux_rhs1 = (A_M1 + _T_t * A_F2 * (*_T_ptr)) * sol_M - rhs_M1 - _T_t * rhs_F2;
-
-//   // auto vl = utopia::layout(A_M1.comm(), A_M1.local_rows(), A_M1.rows());
-
-//   // utopia::UVector vec(vl, 1);
-
-//   // utopia::UVector ris = (*_T_ptr) * vec;
-
-//   // utopia::disp(ris);
-
-//   // utopia::UVector flux_0 = B_M0 * flux_rhs0;
-
-//   // utopia::UVector flux_1 = B_M1 * flux_rhs1;
+ 
 
 //   if(_has_variable_name_1 && _has_variable_name_2)
 
@@ -995,29 +1035,29 @@
 //       std::cout<<"END initialize\n";
 // }
 
-// void ComputeFluxUtopia::write()
+// void ComputeFluxUtopiaED::write()
 // {
-//       std::cout<<"ComputeFluxUtopia::write() start\n";
+//       std::cout<<"ComputeFluxUtopiaED::write() start\n";
 
 //       if(_has_exodus_file)
 //       {
 //         ExodusII_IO (_equationSystemsM.get_mesh()).write_equation_systems(_exodus_filename.c_str(), _equationSystemsM); //output_filename.c_str()
 //       }
 
-//       std::cout<<"ComputeFluxUtopia::write() stop\n";
+//       std::cout<<"ComputeFluxUtopiaED::write() stop\n";
 // }
 
-// void ComputeFluxUtopia::del()
+// void ComputeFluxUtopiaED::del()
 // {
-//       std::cout<<"ComputeFluxUtopia::del() start\n";
+//       std::cout<<"ComputeFluxUtopiaED::del() start\n";
 
 //       // //_equationSystemsP[0].delete_system(_sys_name.c_str());
 //       // _equationSystemsP[0].clear();
 
-//       std::cout<<"ComputeFluxUtopia::del() stop\n";  
+//       std::cout<<"ComputeFluxUtopiaED::del() stop\n";  
 // }
 
-// void ComputeFluxUtopia::initialize()
+// void ComputeFluxUtopiaED::initialize()
 // {
 
 //       init();
@@ -1032,9 +1072,9 @@
      
 // }
 
-// void ComputeFluxUtopia::assembleMatrix()
+// void ComputeFluxUtopiaED::assembleMatrix()
 // {
-//   std::cout << "ComputeFluxUtopia::assemble Matrix start\n";
+//   std::cout << "ComputeFluxUtopiaED::assemble Matrix start\n";
 
 //   SparseMatrix <Number> & AM0=_linearImplicitSystemM[0].get_matrix( _mat_domain_name_M0.c_str() );
 //   SparseMatrix <Number> & AM1=_linearImplicitSystemM[0].get_matrix( _mat_domain_name_M1.c_str() );
@@ -1148,16 +1188,26 @@
 //       if (elem->neighbor_ptr(side) == nullptr)
 //       {
 //         fe_face->reinit(elem, side);
-//         for(int k =0; k < _neumannSidesetIds.size(); k++)
+
+//           std::vector<boundary_id_type> ids_vec;
+
+//          _meshBase[0].get_boundary_info().boundary_ids(elem, side, ids_vec);
+
+//         for (int k =0; k < ids_vec.size(); k++){
+//            //std::cout<<" _neumannSidesetIds_M.at("<<k<<")"<<"is "<< ids_vec.at(k)<<std::endl;
+//        }
+
+
+//         for(int k =0; k < _neumannSidesetIds_M.size(); k++)
 //         {
-//           if ( _meshBase[0].get_boundary_info().has_boundary_id (elem, side, _neumannSidesetIds.at(k)) )
+//           if ( _meshBase[0].get_boundary_info().has_boundary_id (elem, side, _neumannSidesetIds_M.at(k)) )
 //           {
 //             for (unsigned int qp=0; qp<qface->n_points(); qp++)
 //               for (unsigned int i=0; i != n_dofs; i++){
 
-//                // std::cout<<" _neumannSidesetIds.at("<<k<<")"<<"is "<< _neumannSidesetIds.at(k)<<std::endl;
+//                 //std::cout<<" _neumannSidesetIds_M.at("<<k<<")"<<"is "<< _neumannSidesetIds_M.at(k)<<std::endl;
                 
-//                 re(i) += JxW_face[qp] * _neumannFunctions.at(k)[0].value(0.0,q_points_face[qp]) * phi_face[i][qp];
+//                 re(i) += JxW_face[qp] * _neumannFunctions_M.at(k)[0].value(0.0,q_points_face[qp]) * phi_face[i][qp];
 //               }
 //           }
 //         }
@@ -1167,14 +1217,14 @@
 //   _dof_map[0].constrain_element_matrix_and_vector (ke, re, dof_indices,false);
 //   _dof_map[0].constrain_element_matrix (ke_Z, dof_indices_Z,false);
 
-//   if (ke_Z.m()>n_dofs)
-//   {
-//     for (int ii=0; ii<ke_Z.m(); ++ii)
-//       if (ke_Z(ii,ii)>0.5)
-//       {
-//         ke(ii,ii)=0.0;
-//       }
-//   }
+//   // if (ke_Z.m()>n_dofs)
+//   // {
+//   //   for (int ii=0; ii<ke_Z.m(); ++ii)
+//   //     if (ke_Z(ii,ii)>0.5)
+//   //     {
+//   //       ke(ii,ii)=0.0;
+//   //     }
+//   // }
 
 //   for (auto side : elem->side_index_range())
 //   {
@@ -1304,20 +1354,20 @@
 //     if (iM0(i)>1e-10)
 //     {
 //       BM0.set(i,i,1/iM0(i));
-//       iM0.set(i,1/iM0(i) );
+//       iM0.set(i, iM0(i) );
 //       //std::cout<<1./iM0(i)<<std::endl;
      
 //     }
-//     if (iM1(i)>1e-10)
-//     {
+//     if (iM1(i)>1e-10){
+    
 //       BM1.set(i,i,1/iM1(i));
-//       iM1.set(i,1/iM1(i));
+//       iM1.set(i, iM1(i));
 
 //     }
 //     if (iM2(i)>1e-10)
 //     {
 //       BM2.set(i,i,1/iM2(i));
-//       iM2.set(i, 1/iM2(i));
+//       iM2.set(i, iM2(i));
 //     }
 
 //   }
@@ -1329,14 +1379,14 @@
 //   iM1.close();
 //   iM2.close();
 
-//   std::cout << "ComputeFluxUtopia::assemble Matrix stop\n";
+//   std::cout << "ComputeFluxUtopiaED::assemble Matrix stop\n";
 // }
 
 
 
-// void ComputeFluxUtopia::assembleFracture()
+// void ComputeFluxUtopiaED::assembleFracture()
 // {
-//   std::cout << "ComputeFluxUtopia::assemble Fracture start\n";
+//   std::cout << "ComputeFluxUtopiaED::assemble Fracture start\n";
 
 //   SparseMatrix <Number> & AF0=_linearImplicitSystemF[0].get_matrix( _mat_domain_name_F0.c_str() );
 //   SparseMatrix <Number> & AF1=_linearImplicitSystemF[0].get_matrix( _mat_domain_name_F1.c_str() );
@@ -1350,9 +1400,7 @@
 //   NumericVector<Number> & bF1=_linearImplicitSystemF[0].get_vector( _vec_rhs_name_F1.c_str() );
 //   NumericVector<Number> & bF2=_linearImplicitSystemF[0].get_vector( _vec_rhs_name_F2.c_str() );
 
-//   NumericVector<Number> & iF0 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F0.c_str());
-//   NumericVector<Number> & iF1 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F1.c_str());
-//   NumericVector<Number> & iF2 = _linearImplicitSystemF[0].get_vector(_vec_boundary_name_F2.c_str());
+
 
 //   AF0.zero();
 //   AF1.zero();
@@ -1363,13 +1411,6 @@
 //   bF1.zero();
   
 //   bF2.zero();
-
-//   iF0.zero();
-//   iF1.zero();
-  
-//   iF2.zero();
-
-//   //FEType fe_type = _dof_mapF[0].variable_type(0);
 
 
 
@@ -1407,18 +1448,18 @@
 //   std::cout<<QGAUSS<<std::endl;
 
 //   std::vector<dof_id_type> dof_indices_F;
-//   std::vector<dof_id_type> dof_indices_FZ;
-//   std::vector<dof_id_type> dof_indices_FB;
+//   // std::vector<dof_id_type> dof_indices_FZ;
+//   // std::vector<dof_id_type> dof_indices_FB;
 
 
-//   DenseMatrix<Number> ke;
-//   DenseMatrix<Number> ke_Z;
-//   DenseVector<Number> re;
+//   DenseMatrix<Number> ke;  DenseVector<Number> re;
 
-//   MeshBase::const_element_iterator           el = _meshBaseF[0].active_local_elements_begin();
-//   MeshBase::const_element_iterator const end_el = _meshBaseF[0].active_local_elements_end();
+//   MeshBase::const_element_iterator           el_f = _meshBaseF[0].active_local_elements_begin();
+//   MeshBase::const_element_iterator const end_el_f = _meshBaseF[0].active_local_elements_end();
 
 //   std::vector<Number> permeability;
+
+//   _meshBaseF[0].get_boundary_info().build_side_list_from_node_list();
 
 //   int count_0=0;
 
@@ -1426,23 +1467,24 @@
 
 //   int count_2=0;
 
-//   for ( ; el != end_el; ++el)
+//   for ( ; el_f != end_el_f; ++el_f)
 //   {
-//     Elem const * elem = *el;
+//     Elem const * elem = *el_f;
+    
 //     fe_F->reinit (elem);
 
 //     int elemId=elem->subdomain_id();
 
 //     _dof_mapF[0].dof_indices(elem, dof_indices_F);
-//     _dof_mapF[0].dof_indices(elem, dof_indices_FZ);
+
+//     //std::cout<<"block ID"<<elem->subdomain_id()<<std::endl;
+
+//     // _dof_mapF[0].dof_indices(elem, dof_indices_FZ);
 
 //     unsigned int const n_dofs = cast_int<unsigned int>(dof_indices_F.size());
 
 //     ke.resize (n_dofs , n_dofs);
 //     ke.zero();
-
-//     ke_Z.resize (n_dofs , n_dofs);
-//     ke_Z.zero();
 
 //     re.resize (n_dofs );
 //     re.zero();
@@ -1462,156 +1504,68 @@
 //       }
 //     }
 
+
+
+
 //   for (auto side : elem->side_index_range())
 //   {
 //       if (elem->neighbor_ptr(side) == nullptr)
 //       {
+//         //std::cout<<" _neumannSidesetIds_F.at("<<0<<")"<<"is "<< _neumannSidesetIds_F.at(0)<<std::endl;
+
 //         fe_face_F->reinit(elem, side);
-//         for(int k =0; k < _neumannSidesetIds.size(); k++)
+
+//         std::vector<boundary_id_type> ids_vec;
+
+//         _meshBaseF[0].get_boundary_info().boundary_ids(elem, side, ids_vec);
+
+//         // for (int k =0; k < ids_vec.size(); k++){
+
+          
+//         //    std::cout<<"elem->id () is "<<elem->id()<<" and _neumannSidesetIds_F.at("<<k<<")"<<"is "<< ids_vec.at(k)<<std::endl;
+//         //  }
+
+//         for(int k =0; k < _neumannSidesetIds_F.size(); k++)
 //         {
-//           if ( _meshBase[0].get_boundary_info().has_boundary_id (elem, side, _neumannSidesetIds.at(k)) )
+//           if ( _meshBaseF[0].get_boundary_info().has_boundary_id (elem, side, _neumannSidesetIds_F.at(k)) )
 //           {
 //             for (unsigned int qp=0; qp<qface->n_points(); qp++)
 //               for (unsigned int i=0; i != n_dofs; i++){
 
-//                // std::cout<<" _neumannSidesetIds.at("<<k<<")"<<"is "<< _neumannSidesetIds.at(k)<<std::endl;
+//                 //std::cout<<" _neumannSidesetIds_F.at("<<k<<")"<<"is "<< _neumannSidesetIds_F.at(k)<<std::endl;
                 
-//                 re(i) += JxW_face[qp] * _neumannFunctions.at(k)[0].value(0.0,q_points_face[qp]) * phi_face[i][qp];
-//               }
-//           }
-//         }
-//       }
-//   }
-
-//   _dof_mapF[0].constrain_element_matrix_and_vector (ke, re, dof_indices_F,false);
-//   _dof_mapF[0].constrain_element_matrix (ke_Z, dof_indices_FZ,false);
-
-//   if (ke_Z.m()>n_dofs)
-//   {
-//     for (int ii=0; ii<ke_Z.m(); ++ii)
-//       if (ke_Z(ii,ii)>0.5)
-//       {
-//         ke(ii,ii)=0.0;
-//       }
-//   }
-
-//   for (auto side : elem->side_index_range())
-//   {
-//     Elem const * otherElem=elem->neighbor_ptr(side);
-//     if (otherElem != nullptr)
-//     {
-//       int otherID=otherElem->subdomain_id();
-//       if (elemId!=otherID)
-//       {
-//         //std::cout<<"close to the boundary\n";
-//         //fe_face->reinit(elem, side);
-
-//         std::unique_ptr<const Elem> test=elem->build_side_ptr (side);
-//         Elem const * ciaoF=test.get();
-
-//         _dof_mapF[0].dof_indices(ciaoF, dof_indices_FB);
-
-//         std::unique_ptr<FEBase> fel  (FEBase::build(_dim_F-1, fe_type));
-//         std::unique_ptr<QBase> qrulel( QBase::build (QGAUSS,_dim_F-1,THIRD));
-//         fel->attach_quadrature_rule (qrulel.get());
-
-//         std::vector<Real>                       const & JxWl = fel->get_JxW();
-//         std::vector<std::vector<Real> >         const & phil = fel->get_phi();
-//         std::vector<Point>                      const & q_pointsl = fel->get_xyz();
-
-//         fel->reinit(ciaoF);
-        
-//         DenseMatrix<Number> kel;
-//         DenseVector<Number> rel;
-//         kel.resize(phil.size(),phil.size());
-//         rel.resize(phil.size());
-//         kel.zero();
-//         rel.zero();
-
-//         for (int i=0; i<phil.size(); ++i)
-//           for (int j=0; j<phil.size(); ++j)
-//             for (int qp=0; qp<phil.at(0).size(); ++qp)
-//               rel(i)+=JxWl.at(qp)*phil.at(i).at(qp)*phil.at(j).at(qp);
-
-//         _dof_mapF[0].constrain_element_matrix_and_vector (kel,rel, dof_indices_FB,true);
-
-//         for (int i=0; i<kel.m();++i)
-//         {
-//           Real & aa=kel(i,i);
-//           if (aa<0.5)
-//             aa=1.0;
-//           else
-//           {
-//             aa=0.0;
-//             for (int j=0; j<kel.n(); ++j)
-//             {
-//               Real & bb=kel(i,j);
-//               if (bb<-1e-10)
-//               {
-//                 bb=-1.0*bb;
+//                 re(i) += JxW_face[qp] * _neumannFunctions_F.at(k)[0].value(0.0,q_points_face[qp]) * phi_face[i][qp];
 //               }
 //             }
 //           }
 //         }
-
-//         if (elemId==3)
-//         {
-//           iF0.add_vector (rel  , dof_indices_FB  );
-//         }
-//         else if(elemId==4)
-//         {
-//           iF1.add_vector (rel  , dof_indices_FB  );
-//         }
-//         else if (elemId ==_block_2_id)
-//         {
-//           iF2.add_vector (rel  , dof_indices_FB  );
-//         }
-//         else
-//         {
-//           mooseError("elemId does not belong to any block fracture 0");
-//         }
-
-
-
 //       }
-        
-//       }
-//   }
 
+//    _dof_mapF[0].constrain_element_matrix_and_vector (ke, re, dof_indices_F,false);
 
-//   if (elemId == 3)
-//   {
-//     count_0=count_0+1;
-//     AF0.add_matrix (ke  , dof_indices_F  );
-//     bF0.add_vector (re  , dof_indices_F  );
-//     AF2.add_matrix (ke  , dof_indices_F  );
-//     bF2.add_vector (re  , dof_indices_F  );
-//   }
-//   else if (elemId == 4)
-//   {
-//     count_1 = count_1+1;
-//     //std::cout<<"Here I am"<<std::endl;
-//     AF1.add_matrix (ke  , dof_indices_F  );
-//     bF1.add_vector (re  , dof_indices_F  );
-//     AF2.add_matrix (ke  , dof_indices_F  );
-//     bF2.add_vector (re  , dof_indices_F  );
-//   }
-//   else
-//   {
-//     std::cout<<elemId<<std::endl;
-//     mooseError("elemId does not belong to any block fracture 1");
-//   }
+//     if (elemId == 3)
+//     {
+//       count_0=count_0+1;
+//       AF0.add_matrix (ke  , dof_indices_F  );
+//       bF0.add_vector (re  , dof_indices_F  );
+//       AF2.add_matrix (ke  , dof_indices_F  );
+//       bF2.add_vector (re  , dof_indices_F  );
+//     }
+//     else if (elemId == 4)
+//     {
+//       count_1 = count_1+1;
+//       //std::cout<<"Here I am"<<std::endl;
+//       AF1.add_matrix (ke  , dof_indices_F  );
+//       bF1.add_vector (re  , dof_indices_F  );
+//       AF2.add_matrix (ke  , dof_indices_F  );
+//       bF2.add_vector (re  , dof_indices_F  );
+//     }
+//     else
+//     {
+//       std::cout<<elemId<<std::endl;
+//       mooseError("elemId does not belong to any block fracture 1");
+//     }
 
-
-
-
-
-  
-
-//   // else
-//   // {
-//   //   mooseError("elemId does not belong to any block");
-//   // }
 
 //   }// elements loop
 
@@ -1621,48 +1575,16 @@
 //   bF0.close();
 //   bF1.close();
 //   bF2.close();
-//   iF0.close();
-//   iF1.close();
-//   iF2.close();
-
-//   for (int i=iF0.first_local_index(); i<iF0.last_local_index(); ++i)
-//   {
-//     if (iF0(i)>1e-10)
-//     {
-//       BF0.set(i, i, iF0(i));
-//       iF0.set( i,1./iF0(i) );
-
-//     }
-//     if (iF1(i)>1e-10)
-//     {
-//       BF0.set(i, i, iF1(i));
-//       iF1.set(i,1./iF1(i));
-//     }
-//     if (iF2(i)>1e-10)
-//     {
-//       BF2.set(i, i, iF2(i));
-//       iF2.set(i,1./iF2(i));
-//     }
-
-//   }
-
-//   BF0.close();
-//   BF1.close();
-//   BF2.close();
-
-//   iF0.close();
-//   iF1.close();
-//   iF2.close();
 
 
 
-//   std::cout << "ComputeFluxUtopia::assemble Fracture stop\n";
+//   std::cout << "ComputeFluxUtopiaED::assemble Fracture stop\n";
 // }
 
 
 
 // Real
-// ComputeFluxUtopia::ComputeMaterialProprties(const Elem *elem)
+// ComputeFluxUtopiaED::ComputeMaterialProprties(const Elem *elem)
 // {
 //     Real permeability=1.0;
 
@@ -1682,7 +1604,7 @@
 
 
 // Real
-// ComputeFluxUtopia::ComputeMaterialProprtiesFracture(const Elem *elem)
+// ComputeFluxUtopiaED::ComputeMaterialProprtiesFracture(const Elem *elem)
 // {
 //     Real permeability = _vector_value_f[0];
 

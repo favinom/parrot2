@@ -290,6 +290,41 @@ void AssembleMassMatrix::assemble_mass_matrix(){
         }
       }
 
+      //        for (int i=0; i<Me_h.m(); ++i)
+      //   {
+
+      //     for (int j=0; j<Me_h.n(); ++j)
+      //      {
+      //       if(Me_h(i,j)==1){
+
+      //         _hanging_vec->set(dof_indices_h.at(i),0.0);
+
+      //       }
+
+      //       int a=dof_indices_h.at(i);
+
+      //       if (dof_map.is_constrained_dof(a)){
+
+      //         // std::cout<<"begin"<<std::endl;
+      //         // std::cout<<"dof_indices.at(i)"<<dof_indices.at(i)<<std::endl;
+      //         // std::cout<<"dof_indices.at(j)"<<dof_indices.at(j)<<std::endl;
+      //         // std::cout<<"value"<<Me_h(i,j)<<std::endl;
+      //         //std::cout<<"end"<<std::endl;
+      //         _hanging_vec->set(dof_indices_h.at(j),0.0);
+
+      //         //  Real value = -1.0 * Me_h(i,j);
+              
+      //         // _hanging_interpolator.set(dof_indices_h.at(i),dof_indices_h.at(j),value);
+
+      //       }
+      //     }
+      //   }
+      // }
+
+      // dof_map.print_info();
+
+       //_hanging_vec->print_matlab("v.m");
+
   
      {
     		

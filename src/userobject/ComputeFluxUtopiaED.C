@@ -718,7 +718,7 @@ void ComputeFluxUtopiaED::solve()
   utopia::UVector sol_tmp = utopia::e_mul(sol_F, d_F);
 
   utopia::UVector lambda = Dinv * A_F2 * sol_F;
-
+  lambda.write("lambda.m");
 
 
   LagrangeMultiplier(lambda);
@@ -729,9 +729,17 @@ void ComputeFluxUtopiaED::solve()
   
   utopia::UVector rF_1 = A_F1 * _TGlobal * sol_M - (*DL1) * lambda;
 
-  utopia::UVector lambda_0 = D0inv * A_F0 * _TGlobal * sol_M - D0inv * rF_0;
+  utopia::UVector lambda_0 = D0inv * A_F0 * sol_F;
 
-  utopia::UVector lambda_1 = D1inv * A_F1 * _TGlobal * sol_M - D1inv * rF_1;
+  utopia::UVector lambda_1 = D1inv * A_F1 * sol_F;
+
+  utopia::UVector lambda_diff = lambda_0-lambda_1;
+
+  utopia::UVector lambda_0c = *DL0*lambda_0;
+
+  utopia::UVector lambda_1c = *DL1*lambda_1;
+
+  utopia::UVector lambda_c = *D*lambda;
 
   utopia::UVector fluxL_rhst0 = -1.0 * (A_M0 + _T0Local_t * A_F0 * _TGlobal) * sol_M + rhs_M0;
 
@@ -741,9 +749,9 @@ void ComputeFluxUtopiaED::solve()
 
   utopia::UVector rhs1_F_d = utopia::e_mul(d_F, rhs_F1);
 
-  utopia::UVector fluxL_rhs0 = utopia::e_mul(d_M, fluxL_rhst0) + _TGlobal_t * rhs0_F_d ;
+  utopia::UVector fluxL_rhs0 = utopia::e_mul(d_M, fluxL_rhst0) + _T0Local_t * rhs0_F_d ;
 
-  utopia::UVector fluxL_rhs1 = utopia::e_mul(d_M, fluxL_rhst1) + _TGlobal_t * rhs1_F_d ;
+  utopia::UVector fluxL_rhs1 = utopia::e_mul(d_M, fluxL_rhst1) + _T1Local_t * rhs1_F_d ;
 
   std::cout<<"New Fluxes on block  0 is ==>"<< std::setprecision(6) << utopia::sum(fluxL_rhs0) << std::endl;
   std::cout<<"New Fluxes on bloack 1 is ==>"<< std::setprecision(6) << utopia::sum(fluxL_rhs1) << std::endl;
@@ -766,10 +774,12 @@ void ComputeFluxUtopiaED::solve()
   // utopia::UVector cF_1 = utopia::e_mul(d_F, cF_t1);
 
   // std::cout<<"ComputeFluxUtopiaED::LocalFluxes Huhges stop\n";
-  // /* lambda.write("lambda.m");
-  //    lambda_0.write("lambda_0.m");
-  //    lambda_1.write("lambda_1.m");*/
 
+  lambda_0.write("lambda_0.m");
+  lambda_1.write("lambda_1.m");
+  (*DL0).write("DL0.m");
+  (*DL1).write("DL1.m");
+  (*D).write("D.m");
   // std::cout << std::fixed;
 
   // /*utopia::UVector vec_0 = cM_0 + cF_0;
@@ -1314,14 +1324,14 @@ void ComputeFluxUtopiaED::assembleFracture()
       count_0=count_0+1;
       AF0.add_matrix (ke  , dof_indices_F  );
       bF0.add_vector (re  , dof_indices_F  );
-      bF2.add_vector (re  , dof_indices_F  );
+      //bF2.add_vector (re  , dof_indices_F  );
     }
     else if (elemId == 4)
     {
       count_1 = count_1+1;
       AF1.add_matrix (ke  , dof_indices_F  );
       bF1.add_vector (re  , dof_indices_F  );
-      AF2.add_matrix (ke  , dof_indices_F  );
+      //AF2.add_matrix (ke  , dof_indices_F  );
     }
     else
     {
