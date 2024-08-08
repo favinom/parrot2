@@ -24,18 +24,18 @@
 
 
 
-inline void convert_vec_SD(libMesh::NumericVector<libMesh::Number> &lm_vec,  utopia::UVector &utopia_vec) {
-    using namespace libMesh;
-    Vec p_vec = cast_ptr<libMesh::PetscVector<libMesh::Number> *>(&lm_vec)->vec();
-    utopia_vec.wrap(p_vec);
-}
+// inline void convert_vec_SD(libMesh::NumericVector<libMesh::Number> &lm_vec,  utopia::UVector &utopia_vec) {
+//     using namespace libMesh;
+//     Vec p_vec = cast_ptr<libMesh::PetscVector<libMesh::Number> *>(&lm_vec)->vec();
+//     utopia_vec.wrap(p_vec);
+// }
 
-inline void convert_mat_SD(libMesh::SparseMatrix<libMesh::Number> &lm_mat, utopia::USparseMatrix &utopia_mat) {
-    using namespace libMesh;
+// inline void convert_mat_SD(libMesh::SparseMatrix<libMesh::Number> &lm_mat, utopia::USparseMatrix &utopia_mat) {
+//     using namespace libMesh;
 
-    Mat p_mat = cast_ptr<libMesh::PetscMatrix<libMesh::Number> *>(&lm_mat)->mat();
-    utopia::convert(p_mat, utopia_mat);
-    }
+//     Mat p_mat = cast_ptr<libMesh::PetscMatrix<libMesh::Number> *>(&lm_mat)->mat();
+//     utopia::convert(p_mat, utopia_mat);
+//     }
 
 
 registerMooseObject("parrot2App", SolveDiffusion);
@@ -250,11 +250,11 @@ void SolveDiffusion::solve()
   sol[0].close();
   _linearImplicitSystemP[0].update();
 
-  utopia::UVector U_b;
-  utopia::USparseMatrix U_m;
+  // utopia::UVector U_b;
+  // utopia::USparseMatrix U_m;
 
-  convert_vec_SD(b,U_b);
-  convert_mat_SD(M,U_m);
+  // convert_vec_SD(b,U_b);
+  // convert_mat_SD(M,U_m);
 
 
   // U_m.write("system_matrix.m");

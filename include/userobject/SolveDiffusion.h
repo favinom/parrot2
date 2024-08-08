@@ -50,57 +50,58 @@ public:
 
   protected:
 
-  	std::string  _var_name;
+    std::string  _var_name;
     std::string  _sys_name;
     std::string  _material_name;
 
     unsigned int _p_var;
 
-	void init();
-	void assemble();
-	void setDirichlet();
-	void solve();
-	void write();
-	void del();
+  void init();
+  void assemble();
+  void setDirichlet();
+  void solve();
+  void write();
+  void del();
 
   QBase const * const & _qrule;
 
   //Parallel::Communicator * _pp_comm;
   EquationSystems        * _equationSystemsM;
   MeshBase               * _meshBase;
-	EquationSystems        * _equationSystemsP;
-	LinearImplicitSystem   * _linearImplicitSystemP;
-	DistributedMesh        * _mesh;
+  EquationSystems        * _equationSystemsP;
+  LinearImplicitSystem   * _linearImplicitSystemP;
+  DistributedMesh        * _mesh;
 
-	ParrotSolver * _parrotSolver;
+  ParrotSolver * _parrotSolver;
 
   std::vector< Parallel::Communicator const * > _pp_comm;
 
-	unsigned int _dim;
+  unsigned int _dim;
 
-	DofMap * _dof_map;
+  DofMap * _dof_map;
 
-	MaterialBase     * _materialBase;
-	FlowAndTransport * _flowAndTransport;
+  MaterialBase     * _materialBase;
+  FlowAndTransport * _flowAndTransport;
 
-	std::vector<BoundaryName>     _dirichletNodesetNames;
+  std::vector<BoundaryName>     _dirichletNodesetNames;
   std::vector<BoundaryID>       _dirichletSidesetIds;
-	std::vector<Function const *> _dirichletFunctions;
-	std::vector<FunctionName>     _dirichletFunctionNames;
+  std::vector<Function const *> _dirichletFunctions;
+  std::vector<FunctionName>     _dirichletFunctionNames;
 
   std::vector<BoundaryName>     _neumannSidesetNames;
   std::vector<BoundaryID>       _neumannSidesetIds;
   std::vector<Function const *> _neumannFunctions;
   std::vector<FunctionName>     _neumannFunctionNames;
 
-	int _solverType;
+  int _solverType;
 
-	bool const _has_exodus_file;
-	bool const _has_nemesis_file;
+  bool const _has_exodus_file;
+  bool const _has_nemesis_file;
   bool const _has_variable_name;
+  bool _multisubdomain;
 
-	std::string _exodus_filename;
-	std::string _nemesis_filename;
+  std::string _exodus_filename;
+  std::string _nemesis_filename;
   std::string _variable_name;
 
   std::vector<dof_id_type>  _dirIds;

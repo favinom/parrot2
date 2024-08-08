@@ -22,6 +22,11 @@ InputParameters FlowAndTransport::validParams()
 
 	params.addParam<Real>("phi",0.0,"phi");
 	params.addParam<Real>("phiFrac",0.0,"phiFrac");
+	params.addParam<std::vector<int>>("block_id","block_id");
+	params.addParam<std::vector<Real>>("value_phi","value_phi");
+	params.addParam<std::vector<Real>>("value_K","value_K");
+	params.addParam<bool>("multisubdomain",false,"multisubdomain");
+
 
 	return params;
 }
@@ -36,7 +41,11 @@ _porosityFracInput(getParam<Real>("phiFrac")),
 _gradP(parameters.isParamValid("pressure") ? coupledGradient("pressure"): _grad_zero),
 _Kscalar(declareProperty<Real>("conductivityProperty")),
 _phi(declareProperty<Real>("porosityProperty")),
-_U(declareProperty<RealVectorValue>("velocityProperty"))
+_U(declareProperty<RealVectorValue>("velocityProperty")),
+_vector_p(getParam<std::vector<int>>("block_id")),
+_vector_value_k(getParam<std::vector<Real>>("value_K")),
+_vector_value_phi(getParam<std::vector<Real>>("value_phi")),
+_multisubdomain(getParam<bool>("multisubdomain"))
 {
 
 	if ( _hasMeshGenerator && !isParamValid("kFrac"))
@@ -95,6 +104,18 @@ void FlowAndTransport::getPermeability(std::vector<Point> const & p , std::vecto
 	}
 }
 
+
+
+void FlowAndTransport::getPermeabilityId(std::vector<Point> const & p , std::vector<Real> & permeability, int & subdomain_id){
+
+	permeability.resize( p.size() );
+	
+	for (int i=0; i<p.size(); ++i)
+	{
+		getPermeabilityPointId( p.at(i) , permeability.at(i), subdomain_id);
+	}
+}
+
 void FlowAndTransport::getPorosity(std::vector<Point> const & p , std::vector<Real> & porosity)
 {
 	porosity.resize( p.size() );
@@ -104,10 +125,124 @@ void FlowAndTransport::getPorosity(std::vector<Point> const & p , std::vector<Re
 	}
 }
 
+void FlowAndTransport::getPorosityId(std::vector<Point> const & p , std::vector<Real> & porosity, int & subdomain_id)
+{
+	porosity.resize( p.size() );
+	for (int i=0; i<p.size(); ++i)
+	{
+		getPorosityPointId( p.at(i) , porosity.at(i), subdomain_id );
+	}
+}
+
 
 void FlowAndTransport::getPermeabilityPoint(Point const & p , Real & permeability)
 {
-	permeability=_permeabilityBackInput;
+
+
+	permeability = 0.0;
+
+	if (_multisubdomain){
+
+		for(int ll=0; ll<_vector_p.size(); ll++)
+		{
+			if (_assembly.elem()->subdomain_id()==_vector_p[ll])
+			{
+				permeability = _vector_value_k[ll];
+
+				//std::cout<<"domain_id: "<< _assembly.elem()->subdomain_id()<<"and "<<_assembly.currentSubdomainID() <<std::endl;
+				
+				//std::cout<<"permeability: "<<permeability<<std::endl;
+			}
+		}
+	}
+	else{
+		permeability=_permeabilityBackInput;
+	}
+
+	if (_hasMeshGenerator)
+	{
+	  	MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
+	  	InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
+
+	  	std::vector<unsigned int> which=inclusionsMeshModifier.whichIsInside( p );
+	  	if ( which.size()>0 )
+	 	{
+	 		std::vector<Real> permLocal( which.size() );
+	 		for (int i=0; i<which.size(); ++i)
+	 		{
+	 			permLocal.at(i)=_permeabilityFracInput.at( which.at(i) );
+	 		}
+	 		switch ( _operation_type )
+	 		{
+    			case FIRST:
+    			{
+    				permeability=permLocal.at(0);
+    			}
+        		break;
+    			case MAX:
+    			{
+    				permeability=permLocal.at(0);
+    				for (int i=1; i<permLocal.size(); ++i)
+    				{
+    					permeability=std::max(permeability,permLocal.at(i));
+    				}
+    			}
+        		break;
+        		case MIN:
+    			{
+    				permeability=permLocal.at(0);
+    				for (int i=1; i<permLocal.size(); ++i)
+    				{
+    					permeability=std::min(permeability,permLocal.at(i));
+    				}
+    			}
+        		break;
+        		case HARMONIC:
+    			{
+    				Real result=0.0;
+    				for (int i=0; i<permLocal.size(); ++i)
+    					result+=1.0/permLocal.at(i);
+    				permeability=permLocal.size()/result;
+    				//if (permLocal.size()>1)
+    				//	std::cout<<permeability<<std::endl<<std::endl;
+    			}
+        		break;
+        		case ARITHMETIC:
+    			{
+    				Real result=std::accumulate(std::begin(permLocal), std::end(permLocal),0.0);
+    				permeability=result/permLocal.size();
+    			}
+        		break;
+    			default:
+    			{
+    				mooseError("no case");// code to be executed if n doesn't match any cases
+    			}
+			}// switch
+	  	}
+	}
+}
+
+
+void FlowAndTransport::getPermeabilityPointId(Point const & p , Real & permeability, int & subdomain_id)
+{
+
+
+	permeability = 0.0;
+
+	//std::cout<<"domain_id_out: "<< subdomain_id <<std::endl;
+
+	for(int ll=0; ll<_vector_p.size(); ll++)
+	{
+		if (subdomain_id ==_vector_p[ll])
+		{
+				permeability = _vector_value_k[ll];
+				
+				//std::cout<<"permeability: "<<permeability<<std::endl;
+		}
+	}
+	
+	
+
 	if (_hasMeshGenerator)
 	{
 	  	MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
@@ -173,7 +308,50 @@ void FlowAndTransport::getPermeabilityPoint(Point const & p , Real & permeabilit
 
 void FlowAndTransport::getPorosityPoint(Point const & p , Real & porosity)
 {
-	porosity=_porosityBackInput;
+	porosity = 0.0;
+	
+	if (_multisubdomain){
+
+		for(int ll=0; ll<_vector_p.size(); ll++){
+
+			if (_assembly.elem()->subdomain_id()==_vector_p[ll])
+			{
+				porosity = _vector_value_phi[ll];
+
+				//if(_assembly.elem()->subdomain_id()==1) std::cout<<"_assembly.elem()->subdomain_id()"<<_assembly.elem()->subdomain_id()<<" and porosity: "<<porosity<<std::endl;
+			}
+		}
+	}
+	else{
+		porosity=_porosityBackInput;
+	}
+
+			
+	if (_hasMeshGenerator)
+	{
+		MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );
+	  	InclusionsMeshModifier const & inclusionsMeshModifier( dynamic_cast<InclusionsMeshModifier const &>(myMeshGenerator) );
+	  	if (inclusionsMeshModifier.isInside( p ) )
+	  	{
+	  		porosity=_porosityFracInput;
+	  	}
+	}
+}
+
+
+
+void FlowAndTransport::getPorosityPointId(Point const & p , Real & porosity, int & subdomain_id)
+{
+	porosity = 0.0;
+
+	for(int ll=0; ll<_vector_p.size(); ll++){
+		if (subdomain_id ==_vector_p[ll])
+		{
+			porosity = _vector_value_phi[ll];
+	    }
+	}
+	
+			
 	if (_hasMeshGenerator)
 	{
 		MeshGenerator          const & myMeshGenerator       ( _app.getMeshGenerator( _meshGeneratorName ) );

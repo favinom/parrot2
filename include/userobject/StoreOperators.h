@@ -38,42 +38,42 @@ public:
   virtual void finalize() override   {};
   virtual void threadJoin(const UserObject & ) override {};
  
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // Interpolator()
-  // {
-  //   return _interpolator;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  Interpolator()
+  {
+    return _interpolator;
+  };
 
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // H_Interpolator()
-  // {
-  //   return _hanging_interpolator;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  H_Interpolator()
+  {
+    return _hanging_interpolator;
+  };
 
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // MassMatrix()
-  // {
-  //   return _mass_matrix;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  MassMatrix()
+  {
+    return _mass_matrix;
+  };
 
 
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // PoroMassMatrix()
-  // {
-  //   return _poro_mass_matrix;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  PoroMassMatrix()
+  {
+    return _poro_mass_matrix;
+  };
 
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // LumpMassMatrix()
-  // {
-  //   return _lump_mass_matrix;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  LumpMassMatrix()
+  {
+    return _lump_mass_matrix;
+  };
 
-  // std::shared_ptr<PetscMatrix<Number>> &
-  // PoroLumpMassMatrix()
-  // {
-  //   return _poro_lump_mass_matrix;
-  // };
+  std::shared_ptr<PetscMatrix<Number>> &
+  PoroLumpMassMatrix()
+  {
+    return _poro_lump_mass_matrix;
+  };
 
  std::shared_ptr<PetscMatrix<Number>> &
   JacMatrix()
@@ -115,13 +115,13 @@ public:
 
 
 protected:
-  // std::shared_ptr<PetscMatrix<Number>> _interpolator;
-  //std::shared_ptr<PetscMatrix<Number>> _hanging_interpolator;
+  std::shared_ptr<PetscMatrix<Number>> _interpolator;
+  std::shared_ptr<PetscMatrix<Number>> _hanging_interpolator;
   std::shared_ptr<PetscVector<Number>> _hanging_vec;
-  // std::shared_ptr<PetscMatrix<Number>> _mass_matrix;
-  // std::shared_ptr<PetscMatrix<Number>> _poro_mass_matrix;
-  // std::shared_ptr<PetscMatrix<Number>> _lump_mass_matrix;
-  // std::shared_ptr<PetscMatrix<Number>>  _poro_lump_mass_matrix;
+  std::shared_ptr<PetscMatrix<Number>> _mass_matrix;
+  std::shared_ptr<PetscMatrix<Number>> _poro_mass_matrix;
+  std::shared_ptr<PetscMatrix<Number>> _lump_mass_matrix;
+  std::shared_ptr<PetscMatrix<Number>>  _poro_lump_mass_matrix;
   std::shared_ptr<PetscMatrix<Number>>  _jac_matrix;
   std::shared_ptr<PetscVector<Number>>  _bc_vec;
   std::shared_ptr<PetscVector<Number>>  _value_bc_vec;
