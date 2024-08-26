@@ -45,7 +45,8 @@ XFEM                        := no
 
 include $(MOOSE_DIR)/modules/modules.mk
 
-include parrot.mk
+include $(CURDIR)/parrot.mk
+
 ###############################################################################
 
 # dep apps
