@@ -94,7 +94,6 @@ InputParameters ComputeFluxUtopiaED::validParams()
   return params;
 
 }
-
 ComputeFluxUtopiaED::ComputeFluxUtopiaED(const InputParameters & parameters) :
 GeneralUserObject(parameters),
 _material(getParam<bool>("material")),
@@ -718,7 +717,7 @@ void ComputeFluxUtopiaED::solve()
   utopia::UVector sol_tmp = utopia::e_mul(sol_F, d_F);
 
   utopia::UVector lambda = Dinv * A_F2 * sol_F;
-  lambda.write("lambda.m");
+  // lambda.write("lambda.m");
 
 
   LagrangeMultiplier(lambda);
@@ -775,11 +774,11 @@ void ComputeFluxUtopiaED::solve()
 
   // std::cout<<"ComputeFluxUtopiaED::LocalFluxes Huhges stop\n";
 
-  lambda_0.write("lambda_0.m");
-  lambda_1.write("lambda_1.m");
-  (*DL0).write("DL0.m");
-  (*DL1).write("DL1.m");
-  (*D).write("D.m");
+  // lambda_0.write("lambda_0.m");
+  // lambda_1.write("lambda_1.m");
+  // (*DL0).write("DL0.m");
+  // (*DL1).write("DL1.m");
+  // (*D).write("D.m");
   // std::cout << std::fixed;
 
   // /*utopia::UVector vec_0 = cM_0 + cF_0;

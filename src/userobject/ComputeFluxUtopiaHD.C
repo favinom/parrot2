@@ -92,7 +92,6 @@ InputParameters ComputeFluxUtopiaHD::validParams()
   return params;
 
 }
-
 ComputeFluxUtopiaHD::ComputeFluxUtopiaHD(const InputParameters & parameters) :
 GeneralUserObject(parameters),
 _material(getParam<bool>("material")),
